@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão Neuropsicológica - HackerAI</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: white;
+            border-bottom: 3px solid #3498db;
+            color: #3498db;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #3498db;
+        }
+        .patient-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .patient-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .patient-item:hover {
+            background: #f8f9fa;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .calendar-section {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .calendar-nav button {
+            padding: 8px 16px;
+            font-size: 14px;
+            margin: 0 5px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .calendar-day {
+            padding: 12px 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            font-size: 14px;
+        }
+        .calendar-day:hover {
+            background: #fff;
+            transform: scale(1.05);
+        }
+        .calendar-day.today {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        .calendar-day.appointment {
+            background: #d4edda;
+            border-color: #28a745;
+            font-weight: bold;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .weekday {
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            background: rgba(255,255,255,0.7);
+            border-radius: 6px;
+        }
+        .export-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .tabs { flex-direction: column; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 2em; }
+            .tab-content { padding: 20px; }
+            .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .calendar-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Sistema NeuroPsicoGestão</h1>
+            <p>Gestão completa de pacientes para neuropsicólogos</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('patients')">Pacientes</button>
+            <button class="tab-btn" onclick="showTab('regions')">Regiões</button>
+            <button class="tab-btn" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="showTab('calendar')">Calendário</button>
+            <button class="tab-btn" onclick="showTab('export')">Exportar</button>
+        </div>
+
+        <!-- ABA PACIENTES -->
+        <div id="patients" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h3>📋 Novo Paciente</h3>
+                    <form id="patientForm">
+                        <div class="form-group">
+                            <label>Nome do Paciente *</label>
+                            <input type="text" id="patientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Responsável</label>
+                            <input type="text" id="responsible">
+                        </div>
+                        <div class="form-group">
+                            <label>CID/CIDO</label>
+                            <input type="text" id="cid">
+                        </div>
+                        <div class="form-group">
+                            <label>Clínica/Médico</label>
+                            <input type="text" id="clinic">
+                        </div>
+                        <div class="form-group">
+                            <label>Modalidade</label>
+                            <select id="modality">
+                                <option value="">Selecione...</option>
+                                <option value="Presencial">Presencial</option>
+                                <option value="Online">Online</option>
+                                <option value="Híbrido">Híbrido</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Região *</label>
+                            <select id="region" required>
+                                <option value="">Selecione uma região...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cidade *</label>
+                            <input type="text" id="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Data da Consulta</label>
+                            <input type="date" id="date">
+                        </div>
+                        <div class="form-group">
+                            <label>Valor (R$)</label>
+                            <input type="number" id="value" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Idade</label>
+                            <input type="number" id="age" min="0" max="120">
+                        </div>
+                        <button type="submit" class="btn">Adicionar Paciente</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>👥 Lista de Pacientes</h3>
+                    <input type="text" id="searchPatient" placeholder="🔍 Buscar paciente..." style="width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e9ecef; border-radius: 8px;">
+                    <div id="patientList" class="patient-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA REGIÕES -->
+        <div id="regions" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h3>🌍 Nova Região</h3>
+                    <form id="regionForm">
+                        <div class="form-group">
+                            <label>Nome da Região *</label>
+                            <input type="text" id="newRegionName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Contato (WhatsApp/Telefone)</label>
+                            <input type="tel" id="regionContact">
+                        </div>
+                        <button type="submit" class="btn">Criar Região</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>📍 Regiões Cadastradas</h3>
+                    <div id="regionList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalPatients">0</div>
+                    Total Pacientes
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalValue">R$ 0,00</div>
+                    Faturamento Total
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgAge">0</div>
+                    Idade Média
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRegions">0</div>
+                    Regiões
+                </div>
+            </div>
+            <div class="charts-grid">
+                <div class="card">
+                    <h3>📊 Cidades Mais Atendidas</h3>
+                    <canvas id="citiesChart"></canvas>
+                </div>
+                <div class="card">
+                    <h3>👶 Faixa Etária</h3>
+                    <canvas id="ageChart"></canvas>
+                </div>
+                <div class="card">
+                    <h3>📈 Modalidades</h3>
+                    <canvas id="modalityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALENDÁRIO -->
+        <div id="calendar" class="tab-content">
+            <div class="card">
+                <h3>📅 Próximos Atendimentos - Calendário</h3>
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <span id="calendarTitle">Carregando...</span>
+                        <div class="calendar-nav">
+                            <button class="btn" onclick="changeCalendarMonth(-1)">◀ Anterior</button>
+                            <button class="btn" onclick="changeCalendarMonth(1)">Próximo ▶</button>
+                        </div>
+                    </div>
+                    <div id="calendarDisplay"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXPORTAR -->
+        <div id="export" class="tab-content">
+            <div class="export-section">
+                <h3>💾 Backup e Exportação</h3>
+                <p>Seus dados são salvos automaticamente no navegador. Baixe o arquivo para transferir entre navegadores.</p>
+                <button class="btn" onclick="exportData()">📥 Baixar Dados</button>
+                <div style="margin-top: 20px;">
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                    <button class="btn" onclick="document.getElementById('importFile').click()">📤 Importar Dados</button>
+                </div>
+                <div id="exportStatus"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicialização
+        let patients = [];
+        let regions = [];
+        let citiesChart, ageChart, modalityChart, monthChart;
+        let currentCalendarMonth = new Date();
+
+        // Carregar dados do localStorage
+        function loadData() {
+            const savedPatients = localStorage.getItem('neuroPatients');
+            const savedRegions = localStorage.getItem('neuroRegions');
+            if (savedPatients) patients = JSON.parse(savedPatients);
+            if (savedRegions) regions = JSON.parse(savedRegions);
+            updatePatientList();
+            updateRegionList();
+            updateDashboard();
+            updateCalendar();
+        }
+
+        // Salvar dados no localStorage
+        function saveData() {
+            localStorage.setItem('neuroPatients', JSON.stringify(patients));
+            localStorage.setItem('neuroRegions', JSON.stringify(regions));
+        }
+
+        // Mostrar abas
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'dashboard') updateDashboard();
+            if (tabName === 'calendar') updateCalendar();
+            if (tabName === 'patients') updateRegionSelect();
+        }
+
+        // Formulário de paciente
+        document.getElementById('patientForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const patient = {
+                id: Date.now(),
+                name: document.getElementById('patientName').value,
+                responsible: document.getElementById('responsible').value,
+                cid: document.getElementById('cid').value,
+                clinic: document.getElementById('clinic').value,
+                modality: document.getElementById('modality').value,
+                region: document.getElementById('region').value,
+                city: document.getElementById('city').value,
+                date: document.getElementById('date').value || new Date().toISOString().split('T')[0],
+                value: parseFloat(document.getElementById('value').value) || 0,
+                age: parseInt(document.getElementById('age').value) || 0
+            };
+            patients.push(patient);
+            saveData();
+            updatePatientList();
+            updateRegionSelect();
+            updateDashboard();
+            updateCalendar();
+            this.reset();
+            alert('Paciente adicionado com sucesso!');
+        });
+
+        // Atualizar lista de pacientes
+        function updatePatientList() {
+            const list = document.getElementById('patientList');
+            const search = document.getElementById('searchPatient').value.toLowerCase();
+            list.innerHTML = patients
+                .filter(p => p.name.toLowerCase().includes(search) || p.city.toLowerCase().includes(search))
+                .map(p => `
+                    <div class="patient-item">
+                        <div>
+                            <strong>${p.name}</strong><br>
+                            <small>${p.city} - ${p.region} | ${p.modality} | R$ ${p.value.toFixed(2)}</small>
+                        </div>
+                        <div style="text-align: right;">
+                            <button class="btn btn-danger" onclick="deletePatient(${p.id})" style="padding: 5px 10px; font-size: 12px;">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        // Deletar paciente
+        function deletePatient(id) {
+            if (confirm('Deseja realmente excluir este paciente?')) {
+                patients = patients.filter(p => p.id !== id);
+                saveData();
+                updatePatientList();
+                updateDashboard();
+                updateCalendar();
+            }
+        }
+
+        document.getElementById('searchPatient').addEventListener('input', updatePatientList);
+
+        // Regiões
+        document.getElementById('regionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const regionName = document.getElementById('newRegionName').value;
+            if (regions.find(r => r.name === regionName)) {
+                alert('Região já existe!');
+                return;
+            }
+            regions.push({
+                name: regionName,
+                contact: document.getElementById('regionContact').value
+            });
+            saveData();
+            updateRegionList();
+            updateRegionSelect();
+            this.reset();
+            alert('Região criada com sucesso!');
+        });
+
+        function updateRegionList() {
+            document.getElementById('regionList').innerHTML = regions.map(r => `
+                <div class="patient-item">
+                    <div>
+                        <strong>${r.name}</strong>
+                        ${r.contact ? `<br><small>📞 ${r.contact}</small>` : ''}
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteRegion('${r.name}')" style="padding: 5px 10px; font-size: 12px;">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteRegion(name) {
+            if (confirm('Deseja realmente excluir esta região?')) {
+                regions = regions.filter(r => r.name !== name);
+                patients.forEach(p => {
+                    if (p.region === name) p.region = '';
+                });
+                saveData();
+                updateRegionList();
+                updateRegionSelect();
+                updatePatientList();
+                updateDashboard();
+                updateCalendar();
+            }
+        }
+
+        function updateRegionSelect() {
+            const select = document.getElementById('region');
+            select.innerHTML = '<option value="">Selecione uma região...</option>' + 
+                regions.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+        }
+
+        // CALENDÁRIO
+        function updateCalendar() {
+            const monthYear = currentCalendarMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            document.getElementById('calendarTitle').textContent = `📅 ${monthYear}`;
+
+            const year = currentCalendarMonth.getFullYear();
+            const month = currentCalendarMonth.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            let calendarHTML = '<div class="calendar-weekdays">';
+            ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].forEach(day => {
+                calendarHTML += `<div class="weekday">${day}</div>`;
+            });
+            calendarHTML += '</div><div class="calendar-grid">';
+
+            const futurePatients = patients.filter(p => {
+                const patientDate = new Date(p.date);
+                return patientDate >= startDate && patientDate <= lastDay;
+            });
+            
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const dateStr = date.toISOString().split('T')[0];
+                const dayPatients = futurePatients.filter(p => p.date === dateStr);
+                
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                
+                let dayClass = '';
+                if (isToday) dayClass = 'today';
+                else if (dayPatients.length > 0) dayClass = 'appointment';
+                
+                const patientNames = dayPatients.map(p => p.name.slice(0, 8) + '...').join(', ');
+                
+                calendarHTML += `
+                    <div class="calendar-day ${dayClass}" onclick="showDayDetail('${dateStr}')">
+                        <strong>${date.getDate()}</strong>
+                        ${dayPatients.length > 0 ? `<div style="font-size: 11px; margin-top: 4px;">${dayPatients.length} apt.</div>` : ''}
+                        ${patientNames ? `<div style="font-size: 10px;">${patientNames}</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            calendarHTML += '</div>';
+            document.getElementById('calendarDisplay').innerHTML = calendarHTML;
+        }
+
+        function showDayDetail(dateStr) {
+            const dayPatients = patients.filter(p => p.date === dateStr);
+            let detailHTML = `<div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px;">
+                <h4 style="margin-bottom: 15px;">📋 ${new Date(dateStr).toLocaleDateString('pt-BR')} - ${dayPatients.length} Atendimento(s)</h4>`;
+            
+            if (dayPatients.length === 0) {
+                detailHTML += '<p>Nenhum atendimento programado.</p>';
+            } else {
+                dayPatients.forEach(p => {
+                    detailHTML += `
+                        <div style="border: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+                            <strong>${p.name}</strong> | ${p.city} | ${p.modality}<br>
+                            <small>Valor: R$ ${p.value.toFixed(2)} | ${p.cid ? 'CID: ' + p.cid : ''}</small>
+                        </div>
+                    `;
+                });
+            }
+            detailHTML += '</div>';
+            
+            // Inserir após o calendário
+            const calendar = document.getElementById('calendarDisplay');
+            const existingDetail = calendar.querySelector('div[style*="background: white"]');
+            if (existingDetail) existingDetail.remove();
+            calendar.insertAdjacentHTML('beforeend', detailHTML);
+        }
+
+        function changeCalendarMonth(direction) {
+            currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + direction);
+            updateCalendar();
+        }
+
+        // DASHBOARD
+        function updateDashboard() {
+            // Estatísticas
+            document.getElementById('totalPatients').textContent = patients.length;
+            const totalValue = patients.reduce((sum, p) => sum + p.value, 0);
+            document.getElementById('totalValue').textContent = `R$ ${totalValue.toFixed(2)}`;
+            const avgAge = patients.length ? (patients.reduce((sum, p) => sum + p.age, 0) / patients.length).toFixed(1) : 0;
+            document.getElementById('avgAge').textContent = avgAge;
+            document.getElementById('totalRegions').textContent = regions.length;
+
+            // Gráficos
+            updateCitiesChart();
+            updateAgeChart();
+            updateModalityChart();
+        }
+
+        function updateCitiesChart() {
+            const cityData = {};
+            patients.forEach(p => {
+                cityData[p.city] = (cityData[p.city] || 0) + 1;
+            });
+            const ctx = document.getElementById('citiesChart').getContext('2d');
+            if (citiesChart) citiesChart.destroy();
+            citiesChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(cityData).slice(0, 10),
+                    datasets: [{
+                        data: Object.values(cityData).slice(0, 10),
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
+
+        function updateAgeChart() {
+            const ageRanges = {
+                '0-18': 0, '19-30': 0, '31-45': 0, '46-60': 0, '61+': 0
+            };
+            patients.forEach(p => {
+                if (p.age <= 18) ageRanges['0-18']++;
+                else if (p.age <= 30) ageRanges['19-30']++;
+                else if (p.age <= 45) ageRanges['31-45']++;
+                else if (p.age <= 60) ageRanges['46-60']++;
+                else ageRanges['61+']++;
+            });
+            const ctx = document.getElementById('ageChart').getContext('2d');
+            if (ageChart) ageChart.destroy();
+            ageChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(ageRanges),
+                    datasets: [{
+                        label: 'Pacientes',
+                        data: Object.values(ageRanges),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function updateModalityChart() {
+            const modalityData = {};
+            patients.forEach(p => {
+                modalityData[p.modality] = (modalityData[p.modality] || 0) + 1;
+            });
+            const ctx = document.getElementById('modalityChart').getContext('2d');
+            if (modalityChart) modalityChart.destroy();
+            modalityChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(modalityData),
+                    datasets: [{
+                        data: Object.values(modalityData),
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // EXPORTAR/IMPORTAR
+        function exportData() {
+            const data = {
+                patients,
+                regions,
+                exportDate: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `neuropsicogestao-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            document.getElementById('exportStatus').innerHTML = '<p style="color: green;">✅ Dados exportados com sucesso!</p>';
+        }
+
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        patients = data.patients || [];
+                        regions = data.regions || [];
+                        saveData();
+                        updatePatientList();
+                        updateRegionList();
+                        updateRegionSelect();
+                        updateDashboard();
+                        updateCalendar();
+                        alert('Dados importados com sucesso!');
+                    } catch (err) {
+                        alert('Erro ao importar dados!');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Auto-save a cada 30 segundos
+        setInterval(saveData, 30000);
+
+        // Inicializar
+        loadData();
+        updateRegionSelect();
+    </script>
+</body>
+</html>
