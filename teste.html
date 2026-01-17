@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema NeuroPsicoGestão</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+            overflow: hidden; 
+        }
+        .header { 
+            background: linear-gradient(135deg, #2c3e50, #3498db); 
+            color: white; 
+            padding: 30px; 
+            text-align: center; 
+        }
+        .tabs { 
+            display: flex; 
+            background: #f8f9fa; 
+            border-bottom: 2px solid #dee2e6; 
+        }
+        .tab-btn { 
+            flex: 1; 
+            padding: 15px; 
+            background: none; 
+            border: none; 
+            font-size: 16px; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .tab-btn.active { 
+            background: white; 
+            border-bottom: 3px solid #3498db; 
+            color: #3498db; 
+            font-weight: bold; 
+        }
+        .tab-content { 
+            display: none; 
+            padding: 30px; 
+        }
+        .tab-content.active { display: block; }
+        
+        /* Formulários e Inputs */
+        .form-group { margin-bottom: 15px; }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 600; 
+            color: #2c3e50; 
+        }
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #e9ecef; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            transition: border-color 0.3s; 
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+        .btn { 
+            background: linear-gradient(135deg, #3498db, #2980b9); 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px;
+            transition: all 0.2s;
+            margin: 5px 0;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52,152,219,0.4); }
+        .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .btn-success { background: linear-gradient(135deg, #27ae60, #229954); }
+        .btn-small { padding: 8px 16px; font-size: 14px; margin: 0 5px; }
+
+        /* Lista de Pacientes */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            gap: 20px; 
+        }
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 24px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08); 
+            border-left: 5px solid #3498db; 
+        }
+        .patient-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 16px; 
+            border: 2px solid #f0f7ff; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            margin-bottom: 12px;
+            background: #fafbfc;
+        }
+        .patient-item:hover, .patient-item.active {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-color: #3498db;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52,152,219,0.2);
+        }
+        .patient-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* MODAL MOBILE PERFEITO - SUBE DO BAIXO */
+        .modal-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.8); 
+            z-index: 10000; 
+            justify-content: flex-end;
+            backdrop-filter: blur(10px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content { 
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            max-height: 90vh;
+            background: white;
+            border-radius: 24px 24px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            overflow-y: auto;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header { 
+            background: linear-gradient(135deg, #3498db, #2980b9); 
+            color: white; 
+            padding: 24px; 
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .modal-title {
+            font-size: 22px;
+            margin: 0;
+        }
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .modal-body { 
+            padding: 24px; 
+        }
+        .modal-edit-form {
+            display: none;
+        }
+        .modal-edit-form.active {
+            display: block;
+        }
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 16px; 
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #3498db;
+        }
+        .info-label { 
+            font-weight: bold; 
+            color: #7f8c8d; 
+            font-size: 14px;
+        }
+        .modal-footer { 
+            padding: 24px; 
+            background: #f8f9fa; 
+            display: flex; 
+            gap: 12px; 
+            justify-content: flex-end; 
+            flex-wrap: wrap;
+        }
+        .edit-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid #eee;
+        }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .grid { grid-template-columns: 1fr; }
+            .tabs { flex-direction: column; }
+            .tab-btn { padding: 20px; font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MODAL MOBILE PERFEITO -->
+    <div id="patientModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle" class="modal-title">Detalhes do Paciente</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <!-- VISUALIZAÇÃO -->
+            <div id="modalBody" class="modal-body">
+                <!-- Preenchido dinamicamente -->
+            </div>
+
+            <!-- FORMULÁRIO DE EDIÇÃO -->
+            <div id="modalEditForm" class="modal-body modal-edit-form">
+                <form id="editPatientForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label>Nome Completo *</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cidade *</label>
+                        <input type="text" id="editCity" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor da Sessão (R$)</label>
+                        <input type="number" id="editValue" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Próxima Consulta</label>
+                        <input type="date" id="editConsultDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Notas/Clínica</label>
+                        <textarea id="editNotes" rows="3" style="resize: vertical;"></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnDelete" class="btn btn-danger">🗑️ Excluir</button>
+                <button id="btnMarcar" class="btn btn-success">📅 Marcar Consulta</button>
+                <button id="btnEditarToggle" class="btn">✏️ Editar</button>
+                <button id="btnSalvar" class="btn btn-success" style="display:none;">💾 Salvar Alterações</button>
+                <button id="btnCancelar" class="btn" style="background:#95a5a6; display:none;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Sistema NeuroPsicoGestão</h1>
+            <p>Gestão de pacientes e agendamentos</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('patients')">👥 Pacientes</button>
+            <button class="tab-btn" onclick="showTab('calendar')">📅 Calendário</button>
+        </div>
+
+        <div id="patients" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h3 id="formTitle">📋 Novo Cadastro</h3>
+                    <form id="patientForm">
+                        <input type="hidden" id="newEditId">
+                        <div class="form-group">
+                            <label>Nome Completo *</label>
+                            <input type="text" id="patientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cidade *</label>
+                            <input type="text" id="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Valor da Sessão (R$)</label>
+                            <input type="number" id="value" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Próxima Consulta</label>
+                            <input type="date" id="consultDate">
+                        </div>
+                        <button type="submit" id="submitBtn" class="btn">➕ Salvar Paciente</button>
+                        <button type="button" id="btnCancel" class="btn" style="display:none; background:#7f8c8d;" onclick="resetForm()">Cancelar</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>👥 Meus Pacientes</h3>
+                    <div style="margin-bottom: 20px;">
+                        <input type="text" id="search" placeholder="🔍 Buscar por nome ou cidade..." style="width: 100%; padding: 14px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px;">
+                    </div>
+                    <div id="patientList" style="max-height: 60vh; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="calendar" class="tab-content">
+            <div class="card">
+                <h3>📅 Agenda do Mês</h3>
+                <div id="calendarDisplay" style="margin-top:20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let patients = JSON.parse(localStorage.getItem('neuroPatients')) || [];
+        let currentPatientId = null;
+
+        function save() { 
+            localStorage.setItem('neuroPatients', JSON.stringify(patients)); 
+            updateAll();
+        }
+
+        // ✅ MODAL AO CLICAR NO PACIENTE - FUNCIONA 100%
+        function showDetails(id) {
+            currentPatientId = id;
+            const p = patients.find(item => item.id === id);
+            
+            // Preenche dados na visualização
+            document.getElementById('modalTitle').textContent = `👤 ${p.name}`;
+            document.getElementById('modalBody').innerHTML = `
+                <div class="info-row">
+                    <span class="info-label">📍 Cidade:</span>
+                    <strong>${p.city}</strong>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">💰 Valor:</span>
+                    <strong>R$ ${(parseFloat(p.value || 0)).toFixed(2)}</strong>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📅 Próxima Consulta:</span>
+                    <strong>${p.consultDate ? new Date(p.consultDate).toLocaleDateString('pt-BR') : 'Não agendada'}</strong>
+                </div>
+                ${p.notes ? `
+                <div class="info-row">
+                    <span class="info-label">📝 Notas:</span>
+                    <strong>${p.notes}</strong>
+                </div>` : ''}
+            `;
+
+            // Configura botões
+            document.getElementById('btnEditarToggle').onclick = () => toggleEditMode();
+            document.getElementById('btnMarcar').onclick = () => quickSchedule(id);
+            document.getElementById('btnDelete').onclick = () => deletePatient(id);
+            
+            // Mostra modal
+            document.getElementById('patientModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() { 
+            document.getElementById('patientModal').classList.remove('active');
+            document.body.style.overflow = '';
+            resetModal();
+        }
+
+        // Toggle modo edição no modal
+        function toggleEditMode() {
+            const editForm = document.getElementById('modalEditForm');
+            const viewBody = document.getElementById('modalBody');
+            
+            if (editForm.classList.contains('active')) {
+                // Volta pra visualização
+                editForm.classList.remove('active');
+                viewBody.classList.add('active');
+                document.getElementById('btnEditarToggle').textContent = '✏️ Editar';
+                document.getElementById('btnSalvar').style.display = 'none';
+                document.getElementById('btnCancelar').style.display = 'none';
+            } else {
+                // Entra em edição
+                const p = patients.find(item => item.id === currentPatientId);
+                document.getElementById('editId').value = p.id;
+                document.getElementById('editName').value = p.name;
+                document.getElementById('editCity').value = p.city;
+                document.getElementById('editValue').value = p.value || '';
+                document.getElementById('editConsultDate').value = p.consultDate || '';
+                document.getElementById('editNotes').value = p.notes || '';
+                
+                editForm.classList.add('active');
+                viewBody.style.display = 'none';
+                document.getElementById('btnEditarToggle').textContent = '👀 Visualizar';
+                document.getElementById('btnSalvar').style.display = 'inline-block';
+                document.getElementById('btnCancelar').style.display = 'inline-block';
+            }
+        }
+
+        // Salvar edição do modal
+        document.getElementById('btnSalvar').onclick = function() {
+            const id = parseInt(document.getElementById('editId').value);
+            const index = patients.findIndex(p => p.id === id);
+            if (index !== -1) {
+                patients[index] = {
+                    ...patients[index],
+                    name: document.getElementById('editName').value,
+                    city: document.getElementById('editCity').value,
+                    value: parseFloat(document.getElementById('editValue').value) || 0,
+                    consultDate: document.getElementById('editConsultDate').value,
+                    notes: document.getElementById('editNotes').value
+                };
+                save();
+                closeModal();
+                alert('✅ Paciente atualizado!');
+            }
+        };
+
+        document.getElementById('btnCancelar').onclick = function() {
+            toggleEditMode();
+        };
+
+        function deletePatient(id) {
+            if (confirm('🗑️ Deseja realmente excluir este paciente?')) {
+                patients = patients.filter(p => p.id !== id);
+                save();
+                closeModal();
+            }
+        }
+
+        function quickSchedule(id) {
+            const newDate = prompt("📅 Data da consulta (AAAA-MM-DD):", new Date().toISOString().split('T')[0]);
+            if (newDate) {
+                const index = patients.findIndex(p => p.id === id);
+                patients[index].consultDate = newDate;
+                save();
+                closeModal();
+                alert(`✅ Consulta marcada para ${new Date(newDate).toLocaleDateString('pt-BR')}`);
+            }
+        }
+
+        function resetModal() {
+            document.getElementById('modalEditForm').classList.remove('active');
+            document.getElementById('modalBody').style.display = 'block';
+            document.getElementById('btnEditarToggle').textContent = '✏️ Editar';
+            document.getElementById('btnSalvar').style.display = 'none';
+            document.getElementById('btnCancelar').style.display = 'none';
+            currentPatientId = null;
+        }
+
+        function resetForm() {
+            document.getElementById('patientForm').reset();
+            document.getElementById('newEditId').value = "";
+            document.getElementById('formTitle').innerText = "📋 Novo Cadastro";
+            document.getElementById('submitBtn').innerText = "➕ Salvar Paciente";
+            document.getElementById('btnCancel').style.display = "none";
+        }
+
+        // FORMULARIO PRINCIPAL
+        document.getElementById('patientForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('newEditId').value);
+            const data = {
+                id: id || Date.now(),
+                name: document.getElementById('patientName').value,
+                city: document.getElementById('city').value,
+                value: parseFloat(document.getElementById('value').value) || 0,
+                consultDate: document.getElementById('consultDate').value
+            };
+
+            if (id) {
+                const idx = patients.findIndex(p => p.id === id);
+                patients[idx] = { ...patients[idx], ...data };
+            } else {
+                patients.unshift(data); // Adiciona no topo
+            }
+
+            save();
+            resetForm();
+            alert(id ? '✅ Atualizado!' : '✅ Cadastrado!');
+        });
+
+        function updateList() {
+            const term = document.getElementById('search').value.toLowerCase();
+            const list = document.getElementById('patientList');
+            const filtered = patients.filter(p => 
+                p.name.toLowerCase().includes(term) || 
+                p.city.toLowerCase().includes(term)
+            );
+            
+            list.innerHTML = filtered.map(p => `
+                <div class="patient-item" onclick="showDetails(${p.id})">
+                    <div style="flex: 1;">
+                        <div class="patient-name">${p.name}</div>
+                        <small style="color: #666;">
+                            📍 ${p.city} • 
+                            💰 R$ ${(p.value||0).toFixed(2)} • 
+                            ${p.consultDate ? `📅 ${new Date(p.consultDate).toLocaleDateString('pt-BR')}` : 'Sem data'}
+                        </small>
+                    </div>
+                    <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); deletePatient(${p.id})">🗑️</button>
+                </div>
+            `).join('') || '<div style="text-align:center; padding:40px; color:#999;"><p>📭 Nenhum paciente encontrado</p></div>';
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(name).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Eventos
+        document.getElementById('search').oninput = updateList;
+        document.getElementById('patientModal').onclick = function(e) {
+            if (e.target === this) closeModal();
+        };
+
+        // Inicializar
+        document.getElementById('consultDate').valueAsDate = new Date();
+        updateList();
+    </script>
+</body>
+</html>
