@@ -1,0 +1,2561 @@
+
+<!doctype html>
+<html lang="pt-BR">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedicBio - Sistema ERP</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .status-aguardando { 
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%) !important;
+      color: #92400E !important;
+      border: 2px solid #F59E0B !important;
+      font-weight: bold !important;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+    }
+    .status-concluido { 
+      background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%) !important;
+      color: #065F46 !important;
+      border: 2px solid #10B981 !important;
+      font-weight: bold !important;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+    }
+    .status-nao-respondida { 
+      background: linear-gradient(135deg, #FED7AA 0%, #FDBA74 100%) !important;
+      color: #9A3412 !important;
+      border: 2px solid #F97316 !important;
+      font-weight: bold !important;
+      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3) !important;
+    }
+    .status-sem-contato { 
+      background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%) !important;
+      color: #991B1B !important;
+      border: 2px solid #EF4444 !important;
+      font-weight: bold !important;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+    }
+    
+    .loading-spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid #10B981;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-left: 8px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .table-container {
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background-color: #F9FAFB;
+      z-index: 10;
+    }
+
+    .btn-primary {
+      background-color: #10B981;
+      transition: all 0.2s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: #059669;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background-color: #6B7280;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background-color: #4B5563;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background-color: #EF4444;
+      transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+      background-color: #DC2626;
+      transform: translateY(-1px);
+    }
+
+    .nav-btn {
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      transform: translateX(4px);
+    }
+
+    .card {
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--color-from) 0%, var(--color-to) 100%);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar-desktop {
+        display: none;
+      }
+      
+      .mobile-header {
+        display: flex;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .sidebar-desktop {
+        display: flex;
+      }
+      
+      .mobile-header {
+        display: none;
+      }
+    }
+
+    .sidebar-mobile {
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .sidebar-mobile.open {
+      transform: translateX(0);
+    }
+
+    .overlay {
+      background-color: rgba(0, 0, 0, 0.5);
+      transition: opacity 0.3s;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .scroll-container {
+      overflow-y: auto;
+      height: calc(100% - 80px);
+    }
+
+    .form-input {
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="w-full"><!-- Mobile Header -->
+  <header class="mobile-header bg-gradient-to-r from-green-700 to-green-900 text-white p-4 shadow-lg items-center justify-between"><button onclick="toggleMobileSidebar()" class="text-white text-2xl"> ☰ </button>
+   <h1 id="empresa-nome-mobile" class="text-xl font-bold">MedicBio</h1>
+   <div class="w-8"></div>
+  </header>
+  <div class="w-full flex" style="height: 100%;"><!-- Overlay for mobile sidebar -->
+   <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="toggleMobileSidebar()"></div><!-- Sidebar Desktop -->
+   <aside class="sidebar-desktop w-72 bg-gradient-to-b from-green-700 to-green-900 text-white p-6 flex-col shadow-2xl">
+    <div class="mb-10">
+     <h1 id="empresa-nome" class="text-3xl font-bold mb-2 tracking-tight">MedicBio</h1>
+     <p class="text-green-200 text-sm font-medium">Sistema de Gestão Integrada</p>
+    </div>
+    <nav class="flex-1 space-y-2"><button onclick="showModule('produtos')" class="nav-btn w-full text-left px-5 py-4 rounded-xl hover:bg-green-600 transition flex items-center gap-3 text-base font-medium bg-green-600" id="nav-produtos"> <span class="text-2xl">📦</span> <span>Estoque/Produtos</span> </button> <button onclick="showModule('receituarios')" class="nav-btn w-full text-left px-5 py-4 rounded-xl hover:bg-green-600 transition flex items-center gap-3 text-base font-medium" id="nav-receituarios"> <span class="text-2xl">📋</span> <span>Receituários/Clientes</span> </button> <button onclick="showModule('caixa')" class="nav-btn w-full text-left px-5 py-4 rounded-xl hover:bg-green-600 transition flex items-center gap-3 text-base font-medium" id="nav-caixa"> <span class="text-2xl">💰</span> <span>Caixa</span> </button>
+    </nav>
+    <footer class="mt-auto pt-6 border-t border-green-600">
+     <p id="footer-text" class="text-green-200 text-xs">Sistema de Gestão Comercial</p>
+     <p class="text-green-300 text-xs mt-2 font-semibold">v1.0 - 2025</p>
+    </footer>
+   </aside><!-- Sidebar Mobile -->
+   <aside id="sidebar-mobile" class="sidebar-mobile fixed top-0 left-0 w-72 h-full bg-gradient-to-b from-green-700 to-green-900 text-white p-6 flex flex-col shadow-2xl z-50">
+    <div class="flex justify-between items-center mb-10">
+     <div>
+      <h1 id="empresa-nome-sidebar" class="text-2xl font-bold tracking-tight">MedicBio</h1>
+      <p class="text-green-200 text-xs font-medium">Sistema de Gestão</p>
+     </div><button onclick="toggleMobileSidebar()" class="text-white text-2xl">✕</button>
+    </div>
+    <nav class="flex-1 space-y-2"><button onclick="showModule('produtos'); toggleMobileSidebar();" class="nav-btn w-full text-left px-5 py-4 rounded-xl hover:bg-green-600 transition flex items-center gap-3 text-base font-medium bg-green-600" id="nav-produtos-mobile"> <span class="text-2xl">📦</span> <span>Estoque/Produtos</span> </button> <button onclick="showModule('receituarios'); toggleMobileSidebar();" class="nav-btn w-full text-left px-5 py-4 rounded-xl hover:bg-green-600 transition flex items-center gap-3 text-base font-medium" id="nav-receituarios-mobile"> <span class="text-2xl">📋</span> <span>Receituários/Clientes</span> </button> <button onclick="showModule('caixa'); toggleMobileSidebar();" class="nav-btn w-full text-left px-5 py-4 rounded-xl hover:bg-green-600 transition flex items-center gap-3 text-base font-medium" id="nav-caixa-mobile"> <span class="text-2xl">💰</span> <span>Caixa</span> </button>
+    </nav>
+    <footer class="mt-auto pt-6 border-t border-green-600">
+     <p id="footer-text-mobile" class="text-green-200 text-xs">Sistema de Gestão Comercial</p>
+    </footer>
+   </aside><!-- Main Content -->
+   <main class="flex-1 bg-gray-50 overflow-y-auto scroll-container">
+    <div class="p-4 md:p-8 max-w-7xl mx-auto"><!-- M��dulo Produtos -->
+     <div id="module-produtos" class="module-content">
+      <div class="mb-8">
+       <h2 class="text-4xl font-bold text-gray-800 mb-2">Cadastro de Produtos</h2>
+       <p class="text-gray-600">Gerencie seu estoque e precifica��ão</p>
+      </div><!-- Dashboard Estoque Baixo -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+       <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #EF4444; --color-to: #DC2626;">
+        <p class="text-red-100 text-sm mb-2 font-semibold">❌ Produtos em Falta</p>
+        <p id="produtos-sem-estoque" class="text-4xl font-bold">0</p>
+       </div>
+       <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #F59E0B; --color-to: #D97706;">
+        <p class="text-orange-100 text-sm mb-2 font-semibold">⚠️ Estoque Baixo</p>
+        <p id="produtos-estoque-baixo" class="text-4xl font-bold">0</p>
+       </div>
+       <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #10B981; --color-to: #059669;">
+        <p class="text-green-100 text-sm mb-2 font-semibold">��� Estoque OK</p>
+        <p id="produtos-estoque-ok" class="text-4xl font-bold">0</p>
+       </div>
+      </div>
+      <div class="card bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+       <h3 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2"><span class="text-green-600">+</span> Novo Produto</h3>
+       <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="md:col-span-2"><label for="produto-nome" class="block text-sm font-semibold text-gray-700 mb-2">Nome do Produto</label> <input type="text" id="produto-nome" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="produto-estoque" class="block text-sm font-semibold text-gray-700 mb-2">Quantidade em Estoque</label> <input type="number" id="produto-estoque" min="0" value="0" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="produto-alerta" class="block text-sm font-semibold text-gray-700 mb-2">Alerta de Estoque Baixo</label> <input type="number" id="produto-alerta" min="0" value="10" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="produto-custo" class="block text-sm font-semibold text-gray-700 mb-2">Valor de Custo (R$)</label> <input type="text" id="produto-custo" placeholder="0,00" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="produto-venda" class="block text-sm font-semibold text-gray-700 mb-2">Valor de Venda (R$)</label> <input type="text" id="produto-venda" placeholder="0,00" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div class="md:col-span-2"><button type="submit" class="btn-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg w-full md:w-auto"> Cadastrar Produto </button>
+        </div>
+       </form>
+      </div>
+      <div class="card bg-white rounded-2xl shadow-lg p-6 md:p-8">
+       <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h3 class="text-2xl font-bold text-gray-800">Produtos Cadastrados</h3>
+        <div class="flex gap-2"><button onclick="filtrarProdutos('todos')" id="filtro-prod-todos" class="px-4 py-2 rounded-lg font-semibold transition bg-green-600 text-white">Todos</button> <button onclick="filtrarProdutos('sem-estoque')" id="filtro-prod-sem-estoque" class="px-4 py-2 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">❌ Sem Estoque</button> <button onclick="filtrarProdutos('estoque-baixo')" id="filtro-prod-estoque-baixo" class="px-4 py-2 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">⚠️ Baixo</button> <button onclick="filtrarProdutos('estoque-ok')" id="filtro-prod-estoque-ok" class="px-4 py-2 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">✅ OK</button>
+        </div>
+       </div><!-- Campo de Busca -->
+       <div class="mb-4 relative"><input type="text" id="busca-produto" placeholder="🔍 Buscar produto..." class="form-input w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none" oninput="buscarProdutos()"> <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl">🔍</span>
+       </div>
+       <div class="table-container">
+        <table class="min-w-full">
+         <thead>
+          <tr class="border-b-2 border-gray-200">
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Produto</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Estoque</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Alerta</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Custo</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Venda</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Margem</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Ações</th>
+          </tr>
+         </thead>
+         <tbody id="produtos-list">
+          <tr>
+           <td colspan="7" class="px-4 py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center gap-3"><span class="text-5xl opacity-20">📦</span> <span>Nenhum produto cadastrado</span>
+            </div></td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Módulo Receituários -->
+     <div id="module-receituarios" class="module-content hidden">
+      <div class="mb-8">
+       <h2 class="text-4xl font-bold text-gray-800 mb-2">Gestão de Receituários</h2>
+       <p class="text-gray-600">Controle completo de pedidos e clientes</p>
+      </div>
+      <div class="card bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+       <h3 class="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-2"><span class="text-green-600">+</span> Novo Receituário</h3>
+       <form id="form-receituario" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div><label for="rec-data-emissao" class="block text-sm font-semibold text-gray-700 mb-2">Data de Emissão</label> <input type="date" id="rec-data-emissao" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="rec-cliente" class="block text-sm font-semibold text-gray-700 mb-2">Nome do Cliente</label> <input type="text" id="rec-cliente" placeholder="Digite o nome do cliente" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="rec-contato" class="block text-sm font-semibold text-gray-700 mb-2">Contato (WhatsApp)</label> <input type="text" id="rec-contato" placeholder="Digite o contato" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="rec-manipulados" class="block text-sm font-semibold text-gray-700 mb-2">Manipulados</label> <input type="text" id="rec-manipulados" placeholder="Ex: Vitamina D3, ��mega 3..." class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="rec-valor-manipulacao" class="block text-sm font-semibold text-gray-700 mb-2">Valor Manipulação (R$)</label> <input type="number" id="rec-valor-manipulacao" step="0.01" min="0" placeholder="0.00" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="rec-valor-medicacao" class="block text-sm font-semibold text-gray-700 mb-2">Valor Medicação Isolado (R$)</label> <input type="number" id="rec-valor-medicacao" step="0.01" min="0" placeholder="0.00" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="rec-tem-desconto" class="block text-sm font-semibold text-gray-700 mb-2">Aplicar Desconto?</label> <select id="rec-tem-desconto" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"> <option value="nao">Não</option> <option value="sim">Sim</option> </select>
+        </div>
+        <div id="rec-desconto-container" class="hidden"><label for="rec-desconto-percentual" class="block text-sm font-semibold text-gray-700 mb-2">Desconto (%)</label> <input type="number" id="rec-desconto-percentual" step="0.01" min="0" max="100" placeholder="0.00" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+        </div>
+        <div><label for="rec-pagamento" class="block text-sm font-semibold text-gray-700 mb-2">Forma de Pagamento</label> <select id="rec-pagamento" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"> <option value="Dinheiro">💵 Dinheiro</option> <option value="Cart����o">💳 Cartão</option> <option value="Pix">📱 Pix</option> </select>
+        </div>
+        <div><label for="rec-entrega" class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Entrega</label> <select id="rec-entrega" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"> <option value="Retirada">🏪 Retirada</option> <option value="Entrega">🚚 Entrega</option> </select>
+        </div>
+        <div><label for="rec-status" class="block text-sm font-semibold text-gray-700 mb-2">Status</label> <select id="rec-status" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white"> <option value="aguardando">�� Aguardando confirmação</option> <option value="concluido">✅ Concluído</option> <option value="nao-respondida">���️ Mensagem não respondida</option> <option value="sem-contato">❌ Não conseguimos entrar em contato</option> </select>
+        </div>
+        <div class="md:col-span-2">
+         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
+          <p class="text-sm font-semibold text-blue-900 mb-2">Valor Total do Receituário</p>
+          <p id="rec-total-preview" class="text-4xl font-bold text-blue-700">R$ 0,00</p>
+         </div><button type="submit" class="btn-primary text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg w-full md:w-auto"> Cadastrar Receituário </button>
+        </div>
+       </form>
+      </div>
+      <div class="card bg-white rounded-2xl shadow-lg p-6 md:p-8">
+       <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h3 class="text-2xl font-bold text-gray-800">Receituários Cadastrados</h3>
+        <div class="flex gap-2"><button onclick="filtrarReceituarios('todos')" id="filtro-todos" class="px-4 py-2 rounded-lg font-semibold transition bg-green-600 text-white">Todos</button> <button onclick="filtrarReceituarios('aguardando')" id="filtro-aguardando" class="px-4 py-2 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">⏳ Aguardando</button> <button onclick="filtrarReceituarios('concluido')" id="filtro-concluido" class="px-4 py-2 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">✅ Concluído</button> <button onclick="filtrarReceituarios('nao-respondida')" id="filtro-nao-respondida" class="px-4 py-2 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">⚠�� Não Resp.</button> <button onclick="filtrarReceituarios('sem-contato')" id="filtro-sem-contato" class="px-4 py-2 rounded-lg font-semibold transition bg-gray-200 text-gray-700 hover:bg-gray-300">❌ Sem Contato</button>
+        </div>
+       </div><!-- Campo de Busca -->
+       <div class="mb-4 relative"><input type="text" id="busca-receituario" placeholder="��� Buscar por nome do cliente ou contato..." class="form-input w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none" oninput="buscarReceituarios()"> <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl">🔍</span>
+       </div>
+       <div class="table-container">
+        <table class="min-w-full">
+         <thead>
+          <tr class="border-b-2 border-gray-200">
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Data</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Cliente</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Contato</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Total</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Entrega</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Status</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Ações</th>
+          </tr>
+         </thead>
+         <tbody id="receituarios-list">
+          <tr>
+           <td colspan="7" class="px-4 py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center gap-3"><span class="text-5xl opacity-20">📋</span> <span>Nenhum receituário cadastrado</span>
+            </div></td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div><!-- Módulo Caixa -->
+     <div id="module-caixa" class="module-content hidden">
+      <div class="mb-8">
+       <h2 class="text-4xl font-bold text-gray-800 mb-2">Gestão de Caixa</h2>
+       <p class="text-gray-600">Controle financeiro e vendas</p>
+      </div><!-- Seletor de Período -->
+      <div class="card bg-white rounded-2xl shadow-lg p-6 mb-6">
+       <div class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]"><label class="block text-sm font-semibold text-gray-700 mb-2">���� Visualizar Data</label> <input type="date" id="caixa-data-filtro" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none" onchange="atualizarVisualizacaoCaixa()">
+        </div>
+        <div class="flex gap-2"><button onclick="navegarDia(-1)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-xl font-bold transition">◀ Dia Anterior</button> <button onclick="navegarDia(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-xl font-bold transition">Próximo Dia ▶</button> <button onclick="irParaHoje()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition">📍 Hoje</button>
+        </div>
+       </div>
+      </div><!-- Cards Diários -->
+      <div class="mb-6">
+       <h3 class="text-xl font-bold text-gray-800 mb-4">📅 Valores do Dia Selecionado</h3>
+       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #3B82F6; --color-to: #2563EB;">
+         <p class="text-blue-100 text-sm mb-2 font-semibold">💰 Saldo Inicial</p>
+         <p id="caixa-saldo-inicial" class="text-3xl font-bold">R$ 0,00</p>
+        </div>
+        <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #10B981; --color-to: #059669;">
+         <p class="text-green-100 text-sm mb-2 font-semibold">📈 Vendas</p>
+         <p id="caixa-total-vendas" class="text-3xl font-bold">R$ 0,00</p>
+        </div>
+        <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #EF4444; --color-to: #DC2626;">
+         <p class="text-red-100 text-sm mb-2 font-semibold">�� Despesas</p>
+         <p id="caixa-total-despesas" class="text-3xl font-bold">R$ 0,00</p>
+        </div>
+        <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #8B5CF6; --color-to: #7C3AED;">
+         <p class="text-purple-100 text-sm mb-2 font-semibold">💵 Saldo Final</p>
+         <p id="caixa-saldo-atual" class="text-3xl font-bold">R$ 0,00</p>
+        </div>
+       </div>
+      </div><!-- Cards Acumulado Mensal -->
+      <div class="mb-6">
+       <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Acumulado do Mês</h3>
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #059669; --color-to: #047857;">
+         <p class="text-green-100 text-sm mb-2 font-semibold">💰 Total de Vendas</p>
+         <p id="caixa-vendas-mensais" class="text-3xl font-bold">R$ 0,00</p>
+        </div>
+        <div class="stat-card rounded-2xl shadow-lg p-6 text-white" style="--color-from: #DC2626; --color-to: #B91C1C;">
+         <p class="text-red-100 text-sm mb-2 font-semibold">💸 Total de Despesas</p>
+         <p id="caixa-despesas-mensais" class="text-3xl font-bold">R$ 0,00</p>
+        </div>
+       </div>
+      </div><!-- Gráficos -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"><!-- Gráfico Produtos Mais Vendidos -->
+       <div class="card bg-white rounded-2xl shadow-lg p-6">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">🏆 Produtos Mais Vendidos do Mês</h3>
+        <canvas id="grafico-produtos"></canvas>
+       </div><!-- Gráfico Formas de Pagamento -->
+       <div class="card bg-white rounded-2xl shadow-lg p-6">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">💳 Formas de Pagamento do Mês</h3>
+        <canvas id="grafico-pagamentos"></canvas>
+       </div>
+      </div><!-- Controles do Caixa -->
+      <div class="card bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+       <div class="flex flex-wrap gap-4"><button onclick="abrirCaixa()" id="btn-abrir-caixa" class="btn-primary text-white px-6 py-3 rounded-xl font-bold shadow-lg"> 🔓 Abrir Caixa </button> <button onclick="abrirTelaVenda()" id="btn-nova-venda" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition"> 🛒 Registrar Venda </button> <button onclick="registrarDespesa()" id="btn-despesa" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition"> 📤 Registrar Despesa </button> <button onclick="fecharCaixa()" id="btn-fechar-caixa" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition" disabled> �� Fechar Caixa </button>
+       </div>
+      </div><!-- Resumo de Movimentações -->
+      <div class="card bg-white rounded-2xl shadow-lg p-6 md:p-8">
+       <h3 class="text-2xl font-bold mb-6 text-gray-800">Movimentações do Dia</h3>
+       <div class="table-container">
+        <table class="min-w-full">
+         <thead>
+          <tr class="border-b-2 border-gray-200">
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Data/Hora</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Tipo</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Descrição</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Valor</th>
+           <th class="px-4 py-4 text-left text-sm font-bold text-gray-700">Ações</th>
+          </tr>
+         </thead>
+         <tbody id="movimentacoes-list">
+          <tr>
+           <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center gap-3"><span class="text-5xl opacity-20">💰</span> <span>Nenhuma movimentação registrada</span>
+            </div></td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div>
+  <script>
+    let allData = [];
+    let currentModule = 'produtos';
+
+    const defaultConfig = {
+      empresa_nome: 'MedicBio',
+      footer_text: 'Sistema de Gestão Comercial'
+    };
+
+    const dataHandler = {
+      onDataChanged(data) {
+        allData = data;
+        renderProdutos();
+        renderReceituarios();
+        atualizarDashboardCaixa();
+      }
+    };
+
+    function showToast(message, type) {
+      const toast = document.createElement('div');
+      toast.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl text-white font-semibold text-sm ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    async function init() {
+      try {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          console.error('Erro ao conectar com banco de dados');
+          return;
+        }
+
+        if (window.elementSdk) {
+          await window.elementSdk.init({
+            defaultConfig,
+            onConfigChange: async (config) => {
+              const nomeEmpresa = config.empresa_nome || defaultConfig.empresa_nome;
+              const footerTexto = config.footer_text || defaultConfig.footer_text;
+              
+              const empresaNomeEl = document.getElementById('empresa-nome');
+              const empresaNomeMobileEl = document.getElementById('empresa-nome-mobile');
+              const empresaNomeSidebarEl = document.getElementById('empresa-nome-sidebar');
+              const footerTextEl = document.getElementById('footer-text');
+              const footerTextMobileEl = document.getElementById('footer-text-mobile');
+              
+              if (empresaNomeEl) empresaNomeEl.textContent = nomeEmpresa;
+              if (empresaNomeMobileEl) empresaNomeMobileEl.textContent = nomeEmpresa;
+              if (empresaNomeSidebarEl) empresaNomeSidebarEl.textContent = nomeEmpresa;
+              if (footerTextEl) footerTextEl.textContent = footerTexto;
+              if (footerTextMobileEl) footerTextMobileEl.textContent = footerTexto;
+            },
+            mapToCapabilities: (config) => ({
+              recolorables: [],
+              borderables: [],
+              fontEditable: undefined,
+              fontSizeable: undefined
+            }),
+            mapToEditPanelValues: (config) => new Map([
+              ['empresa_nome', config.empresa_nome || defaultConfig.empresa_nome],
+              ['footer_text', config.footer_text || defaultConfig.footer_text]
+            ])
+          });
+        }
+
+        atualizarDataEmissao();
+      } catch (error) {
+        console.error('Erro ao inicializar sistema:', error);
+      }
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar-mobile');
+      const overlay = document.getElementById('sidebar-overlay');
+      
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('hidden');
+    }
+
+    function atualizarDataEmissao() {
+      const hoje = new Date();
+      const dataEmissaoEl = document.getElementById('rec-data-emissao');
+      if (dataEmissaoEl) {
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        dataEmissaoEl.value = `${ano}-${mes}-${dia}`;
+      }
+    }
+
+    function showModule(module) {
+      currentModule = module;
+      
+      const modules = document.querySelectorAll('.module-content');
+      modules.forEach(el => {
+        if (el) el.classList.add('hidden');
+      });
+      
+      const targetModule = document.getElementById(`module-${module}`);
+      if (targetModule) {
+        targetModule.classList.remove('hidden');
+      }
+      
+      if (module === 'receituarios') {
+        atualizarDataEmissao();
+      }
+      
+      if (module === 'caixa') {
+        dataVisualizacaoCaixa = new Date();
+        atualizarCampoData();
+        atualizarDashboardCaixa();
+      }
+      
+      const navButtons = ['nav-produtos', 'nav-receituarios', 'nav-caixa',
+                          'nav-produtos-mobile', 'nav-receituarios-mobile', 'nav-caixa-mobile'];
+      navButtons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.classList.remove('bg-green-600');
+        }
+      });
+      
+      const navBtn = document.getElementById(`nav-${module}`);
+      const navBtnMobile = document.getElementById(`nav-${module}-mobile`);
+      if (navBtn) navBtn.classList.add('bg-green-600');
+      if (navBtnMobile) navBtnMobile.classList.add('bg-green-600');
+    }
+
+    // ========== PRODUTOS ==========
+    let filtroProdutoAtivo = 'todos';
+    let buscaProdutoTexto = '';
+
+    function filtrarProdutos(filtro) {
+      filtroProdutoAtivo = filtro;
+      
+      // Atualizar botões
+      ['filtro-prod-todos', 'filtro-prod-sem-estoque', 'filtro-prod-estoque-baixo', 'filtro-prod-estoque-ok'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.classList.remove('bg-green-600', 'text-white');
+          btn.classList.add('bg-gray-200', 'text-gray-700');
+        }
+      });
+      
+      const btnAtivo = document.getElementById(`filtro-prod-${filtro}`);
+      if (btnAtivo) {
+        btnAtivo.classList.remove('bg-gray-200', 'text-gray-700');
+        btnAtivo.classList.add('bg-green-600', 'text-white');
+      }
+      
+      renderProdutos();
+    }
+
+    function buscarProdutos() {
+      const input = document.getElementById('busca-produto');
+      if (input) {
+        buscaProdutoTexto = input.value.toLowerCase();
+        renderProdutos();
+      }
+    }
+
+    window.filtrarProdutos = filtrarProdutos;
+    window.buscarProdutos = buscarProdutos;
+
+    function formatarMoeda(input) {
+      let valor = input.value.replace(/\D/g, '');
+      valor = (parseInt(valor) / 100).toFixed(2);
+      valor = valor.replace('.', ',');
+      valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      input.value = valor;
+    }
+
+    function converterParaNumero(valorFormatado) {
+      return parseFloat(valorFormatado.replace(/\./g, '').replace(',', '.')) || 0;
+    }
+
+    document.getElementById('produto-custo').addEventListener('input', function(e) {
+      formatarMoeda(e.target);
+    });
+
+    document.getElementById('produto-venda').addEventListener('input', function(e) {
+      formatarMoeda(e.target);
+    });
+
+    document.getElementById('form-produto').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Cadastrando...<span class="loading-spinner"></span>';
+      btn.disabled = true;
+
+      const nomeProduto = document.getElementById('produto-nome').value.trim();
+      const valorCusto = converterParaNumero(document.getElementById('produto-custo').value);
+      const valorVenda = converterParaNumero(document.getElementById('produto-venda').value);
+      const quantidadeEstoque = parseInt(document.getElementById('produto-estoque').value) || 0;
+      const alertaEstoque = parseInt(document.getElementById('produto-alerta').value) || 10;
+
+      const produto = {
+        tipo: 'produto',
+        nome_produto: nomeProduto,
+        valor_custo: valorCusto,
+        valor_venda: valorVenda,
+        quantidade_estoque: quantidadeEstoque,
+        alerta_estoque: alertaEstoque
+      };
+
+      const result = await window.dataSdk.create(produto);
+      
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+
+      if (result.isOk) {
+        e.target.reset();
+        document.getElementById('produto-estoque').value = '0';
+        document.getElementById('produto-alerta').value = '10';
+        document.getElementById('produto-custo').value = '0,00';
+        document.getElementById('produto-venda').value = '0,00';
+        showToast('✓ Produto cadastrado com sucesso!', 'success');
+      }
+    });
+
+    function renderProdutos() {
+      let produtos = allData.filter(d => d.tipo === 'produto');
+      
+      // Calcular estatísticas antes dos filtros
+      const semEstoque = produtos.filter(p => p.quantidade_estoque === 0).length;
+      const estoqueBaixo = produtos.filter(p => p.quantidade_estoque > 0 && p.quantidade_estoque <= (p.alerta_estoque || 10)).length;
+      const estoqueOk = produtos.filter(p => p.quantidade_estoque > (p.alerta_estoque || 10)).length;
+      
+      document.getElementById('produtos-sem-estoque').textContent = semEstoque;
+      document.getElementById('produtos-estoque-baixo').textContent = estoqueBaixo;
+      document.getElementById('produtos-estoque-ok').textContent = estoqueOk;
+      
+      // Aplicar filtro de status
+      if (filtroProdutoAtivo === 'sem-estoque') {
+        produtos = produtos.filter(p => p.quantidade_estoque === 0);
+      } else if (filtroProdutoAtivo === 'estoque-baixo') {
+        produtos = produtos.filter(p => p.quantidade_estoque > 0 && p.quantidade_estoque <= (p.alerta_estoque || 10));
+      } else if (filtroProdutoAtivo === 'estoque-ok') {
+        produtos = produtos.filter(p => p.quantidade_estoque > (p.alerta_estoque || 10));
+      }
+      
+      // Aplicar busca por texto
+      if (buscaProdutoTexto) {
+        produtos = produtos.filter(p => 
+          p.nome_produto.toLowerCase().includes(buscaProdutoTexto)
+        );
+      }
+      
+      const tbody = document.getElementById('produtos-list');
+      
+      if (produtos.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="px-4 py-12 text-center text-gray-500">
+              <div class="flex flex-col items-center gap-3">
+                <span class="text-5xl opacity-20">📦</span>
+                <span>Nenhum produto cadastrado</span>
+              </div>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = produtos.map(p => {
+        const margem = ((p.valor_venda - p.valor_custo) / p.valor_custo * 100).toFixed(1);
+        const alertaEstoque = p.alerta_estoque || 10;
+        const estoqueClass = p.quantidade_estoque === 0 ? 'text-red-600 font-bold' : p.quantidade_estoque <= alertaEstoque ? 'text-yellow-600 font-semibold' : 'text-gray-900';
+        
+        return `
+          <tr class="border-b hover:bg-gray-50 transition">
+            <td class="px-4 py-4 text-sm font-medium text-gray-900">${p.nome_produto}</td>
+            <td class="px-4 py-4 text-sm ${estoqueClass}">${p.quantidade_estoque} ${p.quantidade_estoque === 0 ? '❌' : p.quantidade_estoque <= alertaEstoque ? '⚠️' : '✅'}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">${p.alerta_estoque}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">R$ ${p.valor_custo.toFixed(2)}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">R$ ${p.valor_venda.toFixed(2)}</td>
+            <td class="px-4 py-4 text-sm text-green-600 font-bold">${margem}%</td>
+            <td class="px-4 py-4 text-sm">
+              <button onclick="editarProduto('${p.__backendId}')" class="text-blue-600 hover:text-blue-800 font-medium transition mr-3">Editar</button>
+              <button onclick="deletarProduto('${p.__backendId}')" class="text-red-600 hover:text-red-800 font-medium transition">Excluir</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function editarProduto(id) {
+      const produto = allData.find(d => d.__backendId === id);
+      if (!produto) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl">
+          <h3 class="text-2xl font-bold mb-6 text-gray-800">✏️ Editar Produto</h3>
+          <form id="form-editar-produto" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="md:col-span-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Nome do Produto *</label>
+              <input type="text" id="edit-produto-nome" value="${produto.nome_produto}" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Quantidade em Estoque *</label>
+              <input type="number" id="edit-produto-estoque" value="${produto.quantidade_estoque}" required min="0" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Alerta de Estoque Baixo *</label>
+              <input type="number" id="edit-produto-alerta" value="${produto.alerta_estoque}" required min="0" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Valor de Custo (R$) *</label>
+              <input type="text" id="edit-produto-custo" value="${produto.valor_custo.toFixed(2).replace('.', ',')}" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Valor de Venda (R$) *</label>
+              <input type="text" id="edit-produto-venda" value="${produto.valor_venda.toFixed(2).replace('.', ',')}" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div class="md:col-span-2 flex gap-3">
+              <button type="button" onclick="this.closest('.fixed').remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+              <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Salvar Altera������es</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      document.getElementById('edit-produto-custo').addEventListener('input', function(e) {
+        formatarMoeda(e.target);
+      });
+
+      document.getElementById('edit-produto-venda').addEventListener('input', function(e) {
+        formatarMoeda(e.target);
+      });
+
+      document.getElementById('form-editar-produto').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Salvando...<span class="loading-spinner"></span>';
+        btn.disabled = true;
+
+        produto.nome_produto = document.getElementById('edit-produto-nome').value.trim();
+        produto.quantidade_estoque = parseInt(document.getElementById('edit-produto-estoque').value);
+        produto.alerta_estoque = parseInt(document.getElementById('edit-produto-alerta').value);
+        produto.valor_custo = converterParaNumero(document.getElementById('edit-produto-custo').value);
+        produto.valor_venda = converterParaNumero(document.getElementById('edit-produto-venda').value);
+
+        const result = await window.dataSdk.update(produto);
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        if (result.isOk) {
+          modal.remove();
+          showToast('✓ Produto atualizado com sucesso!', 'success');
+        } else {
+          showToast('�� Erro ao atualizar produto', 'error');
+        }
+      });
+    }
+
+    async function deletarProduto(id) {
+      const produto = allData.find(d => d.__backendId === id);
+      if (!produto) return;
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      confirmDiv.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+          <h3 class="text-2xl font-bold mb-4 text-gray-800">Confirmar exclusão?</h3>
+          <p class="text-gray-600 mb-6">Deseja realmente excluir o produto "<strong>${produto.nome_produto}</strong>"?</p>
+          <div class="flex gap-3">
+            <button onclick="this.closest('div').parentElement.remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+            <button onclick="confirmarExclusaoProduto('${id}')" class="btn-danger text-white px-6 py-3 rounded-xl flex-1 font-semibold">Excluir</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmDiv);
+    }
+
+    async function confirmarExclusaoProduto(id) {
+      const produto = allData.find(d => d.__backendId === id);
+      if (!produto) return;
+
+      const result = await window.dataSdk.delete(produto);
+      document.querySelector('.fixed.inset-0').remove();
+      
+      if (result.isOk) {
+        showToast('✓ Produto excluído com sucesso!', 'success');
+      } else {
+        showToast('✗ Erro ao excluir produto', 'error');
+      }
+    }
+
+    // ========== CAIXA ==========
+    let caixaAberto = null;
+    let dataVisualizacaoCaixa = new Date();
+    let graficoProdutos = null;
+    let graficoPagamentos = null;
+
+    function navegarDia(direcao) {
+      dataVisualizacaoCaixa.setDate(dataVisualizacaoCaixa.getDate() + direcao);
+      atualizarCampoData();
+      atualizarVisualizacaoCaixa();
+    }
+
+    function irParaHoje() {
+      dataVisualizacaoCaixa = new Date();
+      atualizarCampoData();
+      atualizarVisualizacaoCaixa();
+    }
+
+    function atualizarCampoData() {
+      const dataFiltro = document.getElementById('caixa-data-filtro');
+      if (dataFiltro) {
+        const ano = dataVisualizacaoCaixa.getFullYear();
+        const mes = String(dataVisualizacaoCaixa.getMonth() + 1).padStart(2, '0');
+        const dia = String(dataVisualizacaoCaixa.getDate()).padStart(2, '0');
+        dataFiltro.value = `${ano}-${mes}-${dia}`;
+      }
+    }
+
+    function atualizarVisualizacaoCaixa() {
+      const dataFiltro = document.getElementById('caixa-data-filtro');
+      if (dataFiltro && dataFiltro.value) {
+        dataVisualizacaoCaixa = new Date(dataFiltro.value + 'T00:00:00');
+      }
+      atualizarDashboardCaixa();
+    }
+
+    function atualizarDashboardCaixa() {
+      const dataStr = dataVisualizacaoCaixa.toISOString().split('T')[0];
+      const mesAno = dataStr.substring(0, 7); // YYYY-MM
+      
+      // Buscar caixa do dia selecionado
+      const caixas = allData.filter(d => d.tipo === 'caixa');
+      const caixaDoDia = caixas.find(c => c.data_caixa === dataStr);
+      
+      // Verificar se é hoje
+      const hoje = new Date().toISOString().split('T')[0];
+      const isHoje = dataStr === hoje;
+      
+      // Atualizar variável global caixaAberto SEMPRE que houver um caixa aberto HOJE
+      const caixaAbertoHoje = caixas.find(c => c.data_caixa === hoje && c.status_caixa === 'aberto');
+      caixaAberto = caixaAbertoHoje || null;
+      
+      // Calcular valores do dia
+      let saldoInicial = 0;
+      let totalVendas = 0;
+      let totalDespesas = 0;
+      
+      if (caixaDoDia) {
+        saldoInicial = caixaDoDia.valor_abertura;
+        const vendas = allData.filter(d => d.tipo === 'venda' && d.venda_caixa_id === caixaDoDia.caixa_id);
+        const despesas = allData.filter(d => d.tipo === 'despesa' && d.despesa_caixa_id === caixaDoDia.caixa_id);
+        
+        totalVendas = vendas.reduce((sum, v) => sum + v.venda_valor_final, 0);
+        totalDespesas = despesas.reduce((sum, d) => sum + d.despesa_valor, 0);
+      }
+      
+      const saldoDia = saldoInicial + totalVendas - totalDespesas;
+      
+      // Calcular valores mensais
+      const vendasMes = allData.filter(d => {
+        if (d.tipo !== 'venda') return false;
+        const dataVenda = new Date(d.venda_data).toISOString().split('T')[0];
+        return dataVenda.substring(0, 7) === mesAno;
+      });
+      
+      const despesasMes = allData.filter(d => {
+        if (d.tipo !== 'despesa') return false;
+        const dataDespesa = new Date(d.despesa_data).toISOString().split('T')[0];
+        return dataDespesa.substring(0, 7) === mesAno;
+      });
+      
+      const totalVendasMes = vendasMes.reduce((sum, v) => sum + v.venda_valor_final, 0);
+      const totalDespesasMes = despesasMes.reduce((sum, d) => sum + d.despesa_valor, 0);
+      
+      // Atualizar dashboard
+      document.getElementById('caixa-saldo-inicial').textContent = `R$ ${saldoInicial.toFixed(2)}`;
+      document.getElementById('caixa-total-vendas').textContent = `R$ ${totalVendas.toFixed(2)}`;
+      document.getElementById('caixa-total-despesas').textContent = `R$ ${totalDespesas.toFixed(2)}`;
+      document.getElementById('caixa-saldo-atual').textContent = `R$ ${saldoDia.toFixed(2)}`;
+      
+      document.getElementById('caixa-vendas-mensais').textContent = `R$ ${totalVendasMes.toFixed(2)}`;
+      document.getElementById('caixa-despesas-mensais').textContent = `R$ ${totalDespesasMes.toFixed(2)}`;
+      
+      // Controlar botões - SEMPRE permite abrir caixa
+      document.getElementById('btn-abrir-caixa').disabled = false;
+      
+      if (isHoje && caixaAberto) {
+        // Caixa aberto hoje - pode vender, registrar despesa e fechar
+        document.getElementById('btn-nova-venda').disabled = false;
+        document.getElementById('btn-despesa').disabled = false;
+        document.getElementById('btn-fechar-caixa').disabled = false;
+      } else if (isHoje && !caixaAberto) {
+        // Hoje mas caixa fechado - pode abrir novo caixa
+        document.getElementById('btn-nova-venda').disabled = true;
+        document.getElementById('btn-despesa').disabled = true;
+        document.getElementById('btn-fechar-caixa').disabled = true;
+      } else {
+        // Visualizando dia passado ou futuro - sempre pode abrir caixa para qualquer dia
+        const caixaDoDiaPassado = caixas.find(c => c.data_caixa === dataStr);
+        if (caixaDoDiaPassado) {
+          // Tem caixa do dia - pode registrar vendas e despesas
+          document.getElementById('btn-nova-venda').disabled = false;
+          document.getElementById('btn-despesa').disabled = false;
+          document.getElementById('btn-fechar-caixa').disabled = true; // Só fecha se for hoje
+        } else {
+          // Não tem caixa do dia - pode abrir caixa
+          document.getElementById('btn-nova-venda').disabled = true;
+          document.getElementById('btn-despesa').disabled = true;
+          document.getElementById('btn-fechar-caixa').disabled = true;
+        }
+      }
+      
+      renderMovimentacoes();
+      renderGraficos();
+    }
+
+    function renderGraficos() {
+      const dataStr = dataVisualizacaoCaixa.toISOString().split('T')[0];
+      const mesAno = dataStr.substring(0, 7); // YYYY-MM
+      
+      // Buscar todas as vendas do mês
+      const vendasMes = allData.filter(d => {
+        if (d.tipo !== 'venda') return false;
+        const dataVenda = new Date(d.venda_data).toISOString().split('T')[0];
+        return dataVenda.substring(0, 7) === mesAno;
+      });
+
+      // ===== GRÁFICO DE PRODUTOS MAIS VENDIDOS =====
+      const produtosVendidos = {};
+      
+      vendasMes.forEach(venda => {
+        try {
+          const itens = JSON.parse(venda.venda_itens);
+          itens.forEach(item => {
+            if (!produtosVendidos[item.nome]) {
+              produtosVendidos[item.nome] = 0;
+            }
+            produtosVendidos[item.nome] += item.quantidade;
+          });
+        } catch (e) {
+          console.error('Erro ao processar itens da venda:', e);
+        }
+      });
+
+      // Ordenar produtos por quantidade vendida e pegar top 5
+      const produtosOrdenados = Object.entries(produtosVendidos)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      const nomesProdutos = produtosOrdenados.map(p => p[0]);
+      const quantidadesProdutos = produtosOrdenados.map(p => p[1]);
+
+      // Destruir gráfico anterior se existir
+      if (graficoProdutos) {
+        graficoProdutos.destroy();
+      }
+
+      const ctxProdutos = document.getElementById('grafico-produtos');
+      if (ctxProdutos) {
+        graficoProdutos = new Chart(ctxProdutos, {
+          type: 'bar',
+          data: {
+            labels: nomesProdutos,
+            datasets: [{
+              label: 'Quantidade Vendida',
+              data: quantidadesProdutos,
+              backgroundColor: [
+                'rgba(16, 185, 129, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(139, 92, 246, 0.8)',
+                'rgba(245, 158, 11, 0.8)',
+                'rgba(239, 68, 68, 0.8)'
+              ],
+              borderColor: [
+                'rgb(16, 185, 129)',
+                'rgb(59, 130, 246)',
+                'rgb(139, 92, 246)',
+                'rgb(245, 158, 11)',
+                'rgb(239, 68, 68)'
+              ],
+              borderWidth: 2
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              },
+              y: {
+                ticks: {
+                  font: {
+                    size: 12
+                  },
+                  callback: function(value, index) {
+                    const label = this.getLabelForValue(value);
+                    if (label.length > 20) {
+                      return label.substring(0, 20) + '...';
+                    }
+                    return label;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // ===== GRÁFICO DE FORMAS DE PAGAMENTO =====
+      const pagamentos = {
+        'Dinheiro': 0,
+        'Cartão': 0,
+        'Pix': 0
+      };
+
+      vendasMes.forEach(venda => {
+        const forma = venda.forma_pagamento || 'Dinheiro';
+        if (pagamentos.hasOwnProperty(forma)) {
+          pagamentos[forma] += venda.venda_valor_final;
+        }
+      });
+
+      const formasPagamento = Object.keys(pagamentos);
+      const valoresPagamentos = Object.values(pagamentos);
+
+      // Destruir gráfico anterior se existir
+      if (graficoPagamentos) {
+        graficoPagamentos.destroy();
+      }
+
+      const ctxPagamentos = document.getElementById('grafico-pagamentos');
+      if (ctxPagamentos) {
+        graficoPagamentos = new Chart(ctxPagamentos, {
+          type: 'doughnut',
+          data: {
+            labels: formasPagamento.map(f => {
+              const emoji = f === 'Dinheiro' ? '💵' : f === 'Cartão' ? '💳' : '📱';
+              return `${emoji} ${f}`;
+            }),
+            datasets: [{
+              data: valoresPagamentos,
+              backgroundColor: [
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(139, 92, 246, 0.8)'
+              ],
+              borderColor: [
+                'rgb(34, 197, 94)',
+                'rgb(59, 130, 246)',
+                'rgb(139, 92, 246)'
+              ],
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 12,
+                    weight: 'bold'
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = context.parsed || 0;
+                    return `${label}: R$ ${value.toFixed(2)}`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function abrirCaixa() {
+      const dataStr = dataVisualizacaoCaixa.toISOString().split('T')[0];
+      const hoje = new Date().toISOString().split('T')[0];
+      const isHoje = dataStr === hoje;
+      
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+          <h3 class="text-2xl font-bold mb-6 text-gray-800">🔓 Abrir Caixa</h3>
+          ${!isHoje ? `<div class="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 mb-4"><p class="text-sm text-yellow-800 font-semibold">⚠️ Voc���� está abrindo um caixa retroativo para: ${new Date(dataStr).toLocaleDateString('pt-BR')}</p></div>` : ''}
+          <form id="form-abrir-caixa">
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Valor Inicial (R$)</label>
+              <input type="number" id="valor-abertura" step="0.01" min="0" placeholder="0.00" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div class="flex gap-3">
+              <button type="button" onclick="this.closest('.fixed').remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+              <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Abrir Caixa</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      document.getElementById('form-abrir-caixa').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Abrindo...<span class="loading-spinner"></span>';
+        btn.disabled = true;
+
+        const valorAberturaInput = document.getElementById('valor-abertura').value;
+        const valorAbertura = valorAberturaInput ? parseFloat(valorAberturaInput) : 0;
+        
+        const dataStr = dataVisualizacaoCaixa.toISOString().split('T')[0];
+        const hoje = new Date().toISOString().split('T')[0];
+        const isHoje = dataStr === hoje;
+        
+        const caixaId = `CX${Date.now()}`;
+        const dataCaixa = new Date(dataStr + 'T12:00:00');
+
+        const caixa = {
+          tipo: 'caixa',
+          caixa_id: caixaId,
+          valor_abertura: valorAbertura,
+          data_abertura: dataCaixa.toISOString(),
+          data_caixa: dataStr,
+          status_caixa: isHoje ? 'aberto' : 'fechado'
+        };
+
+        const result = await window.dataSdk.create(caixa);
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        if (result.isOk) {
+          modal.remove();
+          showToast('✓ Caixa aberto com sucesso!', 'success');
+        } else {
+          showToast('✗ Erro ao abrir caixa: ' + (result.error?.message || 'Erro desconhecido'), 'error');
+        }
+      });
+    }
+
+    function abrirTelaVenda() {
+      const produtos = allData.filter(d => d.tipo === 'produto');
+      
+      if (produtos.length === 0) {
+        showToast('✗ Nenhum produto cadastrado', 'error');
+        return;
+      }
+
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center z-50 overflow-y-auto p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl my-8">
+          <div class="bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-3xl flex justify-between items-center">
+            <h3 class="text-3xl font-bold">🛒 Registrar Venda</h3>
+            <button onclick="this.closest('.fixed').remove()" class="text-white text-3xl hover:bg-green-800 rounded-full w-10 h-10 flex items-center justify-center transition">✕</button>
+          </div>
+          
+          <div class="p-8">
+            <!-- Campo de data da venda -->
+            <div class="mb-6 bg-blue-50 border-2 border-blue-300 rounded-xl p-4">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">📅 Data da Venda</label>
+              <input type="date" id="venda-data-registro" value="${dataVisualizacaoCaixa.toISOString().split('T')[0]}" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+              <p class="text-xs text-gray-600 mt-2">��� Você pode alterar a data para registrar vendas de dias anteriores</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <!-- Lista de Produtos -->
+              <div class="lg:col-span-2">
+                <h4 class="text-xl font-bold mb-4 text-gray-800">Produtos Disponíveis</h4>
+                
+                <!-- Campo de Busca -->
+                <div class="mb-4 relative">
+                  <input type="text" id="busca-produto-venda" placeholder="�� Buscar produto..." class="form-input w-full px-4 py-3 pl-12 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none" oninput="filtrarProdutosVenda()">
+                  <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-2xl">🔍</span>
+                </div>
+
+                <!-- Lista de Produtos -->
+                <div id="lista-produtos-venda" class="space-y-2 max-h-96 overflow-y-auto pr-2">
+                  ${produtos.map(p => `
+                    <div class="produto-venda-item bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-green-300 transition cursor-pointer ${p.quantidade_estoque === 0 ? 'opacity-50' : ''}" data-produto-id="${p.__backendId}" data-nome="${p.nome_produto.toLowerCase()}" onclick="${p.quantidade_estoque > 0 ? `adicionarItemVenda('${p.__backendId}')` : ''}">
+                      <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                          <h5 class="font-bold text-gray-800 text-lg mb-1">${p.nome_produto}</h5>
+                          <div class="flex items-center gap-4">
+                            <p class="text-sm text-gray-600">Estoque: <strong class="estoque-valor ${p.quantidade_estoque === 0 ? 'text-red-600' : p.quantidade_estoque <= (p.alerta_estoque || 10) ? 'text-yellow-600' : 'text-green-600'}">${p.quantidade_estoque}</strong></p>
+                            <p class="text-xl font-bold text-green-600">R$ ${p.valor_venda.toFixed(2)}</p>
+                          </div>
+                        </div>
+                        <span class="text-3xl ml-4 estoque-icone">${p.quantidade_estoque > 0 ? '✅' : '��'}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Carrinho -->
+              <div class="lg:col-span-1">
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 sticky top-0">
+                  <h4 class="text-xl font-bold mb-4 text-gray-800">🛒 Carrinho</h4>
+                  <div id="carrinho-itens" class="space-y-3 mb-6 max-h-64 overflow-y-auto">
+                    <p class="text-gray-500 text-center py-8">Carrinho vazio</p>
+                  </div>
+                  
+                  <div class="border-t-2 border-blue-200 pt-4 mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                      <span class="text-gray-700 font-semibold">Subtotal:</span>
+                      <span id="venda-subtotal" class="text-xl font-bold text-gray-800">R$ 0,00</span>
+                    </div>
+                    <div class="mb-4">
+                      <label class="flex items-center gap-2 mb-2">
+                        <input type="checkbox" id="venda-aplicar-desconto" class="w-5 h-5" onchange="toggleDescontoVenda()">
+                        <span class="font-semibold text-gray-700">Aplicar Desconto</span>
+                      </label>
+                      <input type="number" id="venda-desconto" step="0.01" min="0" placeholder="% desconto" disabled class="form-input w-full px-4 py-2 border-2 border-gray-200 rounded-xl outline-none" oninput="calcularTotalVenda()">
+                    </div>
+                    <div class="flex justify-between items-center bg-green-600 text-white p-4 rounded-xl">
+                      <span class="text-lg font-bold">TOTAL:</span>
+                      <span id="venda-total" class="text-3xl font-bold">R$ 0,00</span>
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Forma de Pagamento</label>
+                    <select id="venda-forma-pagamento" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none bg-white" onchange="togglePagamentoMisto()">
+                      <option value="Dinheiro">💵 Dinheiro</option>
+                      <option value="Cartão">💳 Cartão</option>
+                      <option value="Pix">📱 Pix</option>
+                      <option value="Misto">🔀 Pagamento Misto</option>
+                    </select>
+                  </div>
+
+                  <!-- Área de Pagamento Misto -->
+                  <div id="pagamento-misto-container" class="mb-4 hidden">
+                    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 space-y-3">
+                      <p class="text-sm font-bold text-blue-900 mb-3">💡 Dividir pagamento entre:</p>
+                      
+                      <!-- Dinheiro -->
+                      <div class="flex items-center gap-3">
+                        <input type="checkbox" id="misto-dinheiro" class="w-5 h-5" onchange="toggleCampoPagamento('dinheiro')">
+                        <label for="misto-dinheiro" class="font-semibold text-gray-700">💵 Dinheiro</label>
+                        <input type="number" id="valor-dinheiro" step="0.01" min="0" placeholder="R$ 0,00" disabled class="form-input flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg outline-none text-sm" oninput="calcularTotalVenda()">
+                      </div>
+
+                      <!-- Cartão -->
+                      <div class="flex items-center gap-3">
+                        <input type="checkbox" id="misto-cartao" class="w-5 h-5" onchange="toggleCampoPagamento('cartao')">
+                        <label for="misto-cartao" class="font-semibold text-gray-700">💳 Cartão</label>
+                        <input type="number" id="valor-cartao" step="0.01" min="0" placeholder="R$ 0,00" disabled class="form-input flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg outline-none text-sm" oninput="calcularTotalVenda()">
+                      </div>
+
+                      <!-- Pix -->
+                      <div class="flex items-center gap-3">
+                        <input type="checkbox" id="misto-pix" class="w-5 h-5" onchange="toggleCampoPagamento('pix')">
+                        <label for="misto-pix" class="font-semibold text-gray-700">📱 Pix</label>
+                        <input type="number" id="valor-pix" step="0.01" min="0" placeholder="R$ 0,00" disabled class="form-input flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg outline-none text-sm" oninput="calcularTotalVenda()">
+                      </div>
+
+                      <!-- Resumo -->
+                      <div class="border-t-2 border-blue-200 pt-3 mt-3">
+                        <div class="flex justify-between text-sm mb-1">
+                          <span class="text-gray-700">Total a pagar:</span>
+                          <span id="misto-total-necessario" class="font-bold text-gray-800">R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-1">
+                          <span class="text-gray-700">Total informado:</span>
+                          <span id="misto-total-informado" class="font-bold text-blue-600">R$ 0,00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                          <span class="text-gray-700">Diferença:</span>
+                          <span id="misto-diferenca" class="font-bold text-red-600">R$ 0,00</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button onclick="finalizarVenda()" id="btn-finalizar-venda" class="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg transition">
+                    ✓ Finalizar Venda
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      window.carrinhoVenda = [];
+      window.calcularTotalVenda = calcularTotalVenda;
+      window.toggleDescontoVenda = toggleDescontoVenda;
+      window.adicionarItemVenda = adicionarItemVenda;
+      window.removerItemVenda = removerItemVenda;
+      window.atualizarQuantidadeVenda = atualizarQuantidadeVenda;
+      window.finalizarVenda = finalizarVenda;
+      window.filtrarProdutosVenda = filtrarProdutosVenda;
+      window.togglePagamentoMisto = togglePagamentoMisto;
+      window.toggleCampoPagamento = toggleCampoPagamento;
+    }
+
+    function togglePagamentoMisto() {
+      const formaPagamento = document.getElementById('venda-forma-pagamento').value;
+      const container = document.getElementById('pagamento-misto-container');
+      
+      if (formaPagamento === 'Misto') {
+        container.classList.remove('hidden');
+        calcularTotalVenda();
+      } else {
+        container.classList.add('hidden');
+        // Resetar campos do pagamento misto
+        ['misto-dinheiro', 'misto-cartao', 'misto-pix'].forEach(id => {
+          const checkbox = document.getElementById(id);
+          if (checkbox) checkbox.checked = false;
+        });
+        ['valor-dinheiro', 'valor-cartao', 'valor-pix'].forEach(id => {
+          const input = document.getElementById(id);
+          if (input) {
+            input.disabled = true;
+            input.value = '';
+          }
+        });
+      }
+    }
+
+    function toggleCampoPagamento(tipo) {
+      const checkbox = document.getElementById(`misto-${tipo}`);
+      const input = document.getElementById(`valor-${tipo}`);
+      
+      if (checkbox && input) {
+        input.disabled = !checkbox.checked;
+        if (!checkbox.checked) {
+          input.value = '';
+        }
+        calcularTotalVenda();
+      }
+    }
+
+    function filtrarProdutosVenda() {
+      const busca = document.getElementById('busca-produto-venda').value.toLowerCase();
+      const produtos = document.querySelectorAll('.produto-venda-item');
+      
+      produtos.forEach(produto => {
+        const nome = produto.getAttribute('data-nome');
+        if (nome.includes(busca)) {
+          produto.style.display = '';
+        } else {
+          produto.style.display = 'none';
+        }
+      });
+    }
+
+    function atualizarEstoqueVisual() {
+      // Atualizar a lista de produtos na tela de venda
+      const produtosItems = document.querySelectorAll('.produto-venda-item');
+      
+      produtosItems.forEach(item => {
+        const produtoId = item.getAttribute('data-produto-id');
+        const produto = allData.find(d => d.__backendId === produtoId);
+        
+        if (produto) {
+          // Calcular estoque disponível considerando o carrinho
+          const itemCarrinho = window.carrinhoVenda.find(i => i.produtoId === produtoId);
+          const quantidadeNoCarrinho = itemCarrinho ? itemCarrinho.quantidade : 0;
+          const estoqueDisponivel = produto.quantidade_estoque - quantidadeNoCarrinho;
+          
+          // Atualizar valor do estoque
+          const estoqueValor = item.querySelector('.estoque-valor');
+          if (estoqueValor) {
+            estoqueValor.textContent = estoqueDisponivel;
+            
+            // Atualizar cor do estoque
+            estoqueValor.classList.remove('text-red-600', 'text-yellow-600', 'text-green-600');
+            if (estoqueDisponivel === 0) {
+              estoqueValor.classList.add('text-red-600');
+            } else if (estoqueDisponivel <= (produto.alerta_estoque || 10)) {
+              estoqueValor.classList.add('text-yellow-600');
+            } else {
+              estoqueValor.classList.add('text-green-600');
+            }
+          }
+          
+          // Atualizar ícone
+          const estoqueIcone = item.querySelector('.estoque-icone');
+          if (estoqueIcone) {
+            estoqueIcone.textContent = estoqueDisponivel > 0 ? '✅' : '❌';
+          }
+          
+          // Atualizar opacidade e clique
+          if (estoqueDisponivel === 0) {
+            item.classList.add('opacity-50');
+            item.style.cursor = 'not-allowed';
+            item.onclick = null;
+          } else {
+            item.classList.remove('opacity-50');
+            item.style.cursor = 'pointer';
+            item.onclick = () => adicionarItemVenda(produtoId);
+          }
+        }
+      });
+    }
+
+    function adicionarItemVenda(produtoId) {
+      const produto = allData.find(d => d.__backendId === produtoId);
+      if (!produto || produto.quantidade_estoque === 0) return;
+
+      const itemExistente = window.carrinhoVenda.find(i => i.produtoId === produtoId);
+      
+      if (itemExistente) {
+        if (itemExistente.quantidade < produto.quantidade_estoque) {
+          itemExistente.quantidade++;
+        } else {
+          showToast('✗ Estoque insuficiente', 'error');
+          return;
+        }
+      } else {
+        window.carrinhoVenda.push({
+          produtoId: produtoId,
+          nome: produto.nome_produto,
+          preco: produto.valor_venda,
+          quantidade: 1,
+          estoqueDisponivel: produto.quantidade_estoque
+        });
+      }
+
+      renderCarrinho();
+      atualizarEstoqueVisual();
+    }
+
+    function removerItemVenda(produtoId) {
+      window.carrinhoVenda = window.carrinhoVenda.filter(i => i.produtoId !== produtoId);
+      renderCarrinho();
+      atualizarEstoqueVisual();
+    }
+
+    function atualizarQuantidadeVenda(produtoId, novaQuantidade) {
+      const item = window.carrinhoVenda.find(i => i.produtoId === produtoId);
+      if (!item) return;
+
+      if (novaQuantidade <= 0) {
+        removerItemVenda(produtoId);
+        return;
+      }
+
+      if (novaQuantidade > item.estoqueDisponivel) {
+        showToast('✗ Estoque insuficiente', 'error');
+        return;
+      }
+
+      item.quantidade = novaQuantidade;
+      renderCarrinho();
+      atualizarEstoqueVisual();
+    }
+
+    function renderCarrinho() {
+      const container = document.getElementById('carrinho-itens');
+      
+      if (window.carrinhoVenda.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 text-center py-8">Carrinho vazio</p>';
+        calcularTotalVenda();
+        return;
+      }
+
+      container.innerHTML = window.carrinhoVenda.map(item => `
+        <div class="bg-white rounded-xl p-3 shadow border border-gray-200">
+          <div class="flex justify-between items-start mb-2">
+            <h5 class="font-bold text-gray-800 text-sm">${item.nome}</h5>
+            <button onclick="removerItemVenda('${item.produtoId}')" class="text-red-600 hover:text-red-800 font-bold">✕</button>
+          </div>
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <button onclick="atualizarQuantidadeVenda('${item.produtoId}', ${item.quantidade - 1})" class="bg-gray-200 hover:bg-gray-300 w-7 h-7 rounded-lg font-bold">-</button>
+              <span class="font-bold text-lg w-8 text-center">${item.quantidade}</span>
+              <button onclick="atualizarQuantidadeVenda('${item.produtoId}', ${item.quantidade + 1})" class="bg-gray-200 hover:bg-gray-300 w-7 h-7 rounded-lg font-bold">+</button>
+            </div>
+            <span class="font-bold text-green-600">R$ ${(item.preco * item.quantidade).toFixed(2)}</span>
+          </div>
+        </div>
+      `).join('');
+
+      calcularTotalVenda();
+    }
+
+    function toggleDescontoVenda() {
+      const checkbox = document.getElementById('venda-aplicar-desconto');
+      const input = document.getElementById('venda-desconto');
+      input.disabled = !checkbox.checked;
+      if (!checkbox.checked) {
+        input.value = '';
+      }
+      calcularTotalVenda();
+    }
+
+    function calcularTotalVenda() {
+      const subtotal = window.carrinhoVenda.reduce((sum, item) => sum + (item.preco * item.quantidade), 0);
+      const checkbox = document.getElementById('venda-aplicar-desconto');
+      const desconto = checkbox && checkbox.checked ? (parseFloat(document.getElementById('venda-desconto').value) || 0) : 0;
+      const total = subtotal - (subtotal * desconto / 100);
+
+      document.getElementById('venda-subtotal').textContent = `R$ ${subtotal.toFixed(2)}`;
+      document.getElementById('venda-total').textContent = `R$ ${total.toFixed(2)}`;
+
+      // Atualizar valores do pagamento misto
+      const formaPagamento = document.getElementById('venda-forma-pagamento');
+      if (formaPagamento && formaPagamento.value === 'Misto') {
+        const totalNecessario = document.getElementById('misto-total-necessario');
+        const totalInformado = document.getElementById('misto-total-informado');
+        const diferenca = document.getElementById('misto-diferenca');
+        
+        if (totalNecessario) totalNecessario.textContent = `R$ ${total.toFixed(2)}`;
+        
+        // Calcular total informado nas formas de pagamento
+        const valorDinheiro = parseFloat(document.getElementById('valor-dinheiro')?.value) || 0;
+        const valorCartao = parseFloat(document.getElementById('valor-cartao')?.value) || 0;
+        const valorPix = parseFloat(document.getElementById('valor-pix')?.value) || 0;
+        
+        const totalPago = valorDinheiro + valorCartao + valorPix;
+        
+        if (totalInformado) totalInformado.textContent = `R$ ${totalPago.toFixed(2)}`;
+        
+        const diff = totalPago - total;
+        if (diferenca) {
+          diferenca.textContent = `R$ ${Math.abs(diff).toFixed(2)}`;
+          
+          // Mudar cor conforme a diferença
+          diferenca.classList.remove('text-red-600', 'text-green-600', 'text-gray-600');
+          if (diff < -0.01) {
+            diferenca.classList.add('text-red-600'); // Faltando
+            diferenca.textContent = `Falta R$ ${Math.abs(diff).toFixed(2)}`;
+          } else if (diff > 0.01) {
+            diferenca.classList.add('text-green-600'); // Excedente (troco)
+            diferenca.textContent = `Troco R$ ${diff.toFixed(2)}`;
+          } else {
+            diferenca.classList.add('text-gray-600'); // Exato
+            diferenca.textContent = `✓ Valor exato`;
+          }
+        }
+      }
+    }
+
+    async function finalizarVenda() {
+      if (window.carrinhoVenda.length === 0) {
+        showToast('✗ Carrinho vazio', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-finalizar-venda');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Finalizando...<span class="loading-spinner"></span>';
+      btn.disabled = true;
+
+      try {
+        const checkbox = document.getElementById('venda-aplicar-desconto');
+        const desconto = checkbox && checkbox.checked ? (parseFloat(document.getElementById('venda-desconto').value) || 0) : 0;
+        const subtotal = window.carrinhoVenda.reduce((sum, item) => sum + (item.preco * item.quantidade), 0);
+        const total = subtotal - (subtotal * desconto / 100);
+
+        // Obter a data da venda do campo
+        const dataVendaInput = document.getElementById('venda-data-registro');
+        const dataVenda = dataVendaInput ? new Date(dataVendaInput.value + 'T12:00:00') : new Date();
+        const dataVendaStr = dataVenda.toISOString().split('T')[0];
+
+        // Buscar ou criar caixa para a data selecionada
+        let caixaParaVenda = allData.find(d => d.tipo === 'caixa' && d.data_caixa === dataVendaStr);
+        
+        if (!caixaParaVenda) {
+          // Criar caixa automaticamente para o dia selecionado
+          const caixaId = `CX${Date.now()}`;
+          caixaParaVenda = {
+            tipo: 'caixa',
+            caixa_id: caixaId,
+            valor_abertura: 0,
+            data_abertura: dataVenda.toISOString(),
+            data_caixa: dataVendaStr,
+            status_caixa: 'fechado'
+          };
+          
+          const caixaResult = await window.dataSdk.create(caixaParaVenda);
+          if (!caixaResult.isOk) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast('✗ Erro ao criar registro de caixa', 'error');
+            return;
+          }
+          
+          // Atualizar o objeto com o __backendId retornado
+          caixaParaVenda = allData.find(d => d.caixa_id === caixaId);
+        }
+
+        // Primeiro, atualizar o estoque de todos os produtos
+        for (const item of window.carrinhoVenda) {
+          const produto = allData.find(d => d.__backendId === item.produtoId);
+          if (produto) {
+            produto.quantidade_estoque -= item.quantidade;
+            const updateResult = await window.dataSdk.update(produto);
+            if (!updateResult.isOk) {
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              showToast('✗ Erro ao atualizar estoque', 'error');
+              return;
+            }
+          }
+        }
+
+        // Processar forma de pagamento
+        const formaPagamentoSelect = document.getElementById('venda-forma-pagamento').value;
+        let formaPagamento = formaPagamentoSelect;
+        
+        // Se for pagamento misto, validar e criar descri��ão
+        if (formaPagamentoSelect === 'Misto') {
+          const valorDinheiro = parseFloat(document.getElementById('valor-dinheiro')?.value) || 0;
+          const valorCartao = parseFloat(document.getElementById('valor-cartao')?.value) || 0;
+          const valorPix = parseFloat(document.getElementById('valor-pix')?.value) || 0;
+          const totalPago = valorDinheiro + valorCartao + valorPix;
+          
+          // Validar se o total está correto (com tolerância de 1 centavo)
+          if (Math.abs(totalPago - total) > 0.01) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast('✗ O valor total do pagamento misto não corresponde ao total da venda', 'error');
+            return;
+          }
+          
+          // Validar se pelo menos duas formas foram selecionadas
+          const formasSelecionadas = [
+            valorDinheiro > 0 ? `Dinheiro: R$ ${valorDinheiro.toFixed(2)}` : null,
+            valorCartao > 0 ? `Cartão: R$ ${valorCartao.toFixed(2)}` : null,
+            valorPix > 0 ? `Pix: R$ ${valorPix.toFixed(2)}` : null
+          ].filter(f => f !== null);
+          
+          if (formasSelecionadas.length < 2) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast('✗ Selecione pelo menos duas formas de pagamento', 'error');
+            return;
+          }
+          
+          // Criar descrição do pagamento misto
+          formaPagamento = `Misto (${formasSelecionadas.join(' + ')})`;
+        }
+
+        // Depois, criar o registro da venda
+        const venda = {
+          tipo: 'venda',
+          venda_data: dataVenda.toISOString(),
+          venda_itens: JSON.stringify(window.carrinhoVenda),
+          venda_desconto: desconto,
+          venda_valor_final: total,
+          venda_caixa_id: caixaParaVenda.caixa_id,
+          forma_pagamento: formaPagamento
+        };
+
+        const result = await window.dataSdk.create(venda);
+
+        if (result.isOk) {
+          // Limpar o carrinho e resetar o formulário, mas manter o modal aberto
+          window.carrinhoVenda = [];
+          renderCarrinho();
+          atualizarEstoqueVisual();
+          document.getElementById('venda-aplicar-desconto').checked = false;
+          document.getElementById('venda-desconto').value = '';
+          document.getElementById('venda-desconto').disabled = true;
+          document.getElementById('busca-produto-venda').value = '';
+          
+          // Resetar forma de pagamento
+          document.getElementById('venda-forma-pagamento').value = 'Dinheiro';
+          
+          // Resetar pagamento misto
+          ['misto-dinheiro', 'misto-cartao', 'misto-pix'].forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) checkbox.checked = false;
+          });
+          ['valor-dinheiro', 'valor-cartao', 'valor-pix'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+              input.disabled = true;
+              input.value = '';
+            }
+          });
+          document.getElementById('pagamento-misto-container').classList.add('hidden');
+          
+          filtrarProdutosVenda();
+          
+          showToast('✓ Venda realizada com sucesso!', 'success');
+        } else {
+          showToast('✗ Erro ao finalizar venda', 'error');
+        }
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      } catch (error) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        showToast('✗ Erro ao processar venda', 'error');
+      }
+    }
+
+    function registrarDespesa() {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+          <h3 class="text-2xl font-bold mb-6 text-gray-800">📤 Registrar Despesa</h3>
+          <form id="form-despesa">
+            <div class="mb-4">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">📅 Data da Despesa</label>
+              <input type="date" id="despesa-data-registro" value="${dataVisualizacaoCaixa.toISOString().split('T')[0]}" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+              <p class="text-xs text-gray-600 mt-1">��� Você pode alterar a data</p>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Descrição</label>
+              <input type="text" id="despesa-descricao" placeholder="Ex: Fornecedor, conta de luz..." class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Valor (R$)</label>
+              <input type="number" id="despesa-valor" step="0.01" min="0" placeholder="0.00" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div class="flex gap-3">
+              <button type="button" onclick="this.closest('.fixed').remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+              <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Registrar</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      document.getElementById('form-despesa').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Registrando...<span class="loading-spinner"></span>';
+        btn.disabled = true;
+
+        // Obter a data da despesa do campo
+        const dataDespesaInput = document.getElementById('despesa-data-registro');
+        const dataDespesa = dataDespesaInput ? new Date(dataDespesaInput.value + 'T12:00:00') : new Date();
+        const dataDespesaStr = dataDespesa.toISOString().split('T')[0];
+
+        // Buscar ou criar caixa para a data selecionada
+        let caixaParaDespesa = allData.find(d => d.tipo === 'caixa' && d.data_caixa === dataDespesaStr);
+        
+        if (!caixaParaDespesa) {
+          // Criar caixa automaticamente para o dia selecionado
+          const caixaId = `CX${Date.now()}`;
+          caixaParaDespesa = {
+            tipo: 'caixa',
+            caixa_id: caixaId,
+            valor_abertura: 0,
+            data_abertura: dataDespesa.toISOString(),
+            data_caixa: dataDespesaStr,
+            status_caixa: 'fechado'
+          };
+          
+          const caixaResult = await window.dataSdk.create(caixaParaDespesa);
+          if (!caixaResult.isOk) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast('✗ Erro ao criar registro de caixa', 'error');
+            return;
+          }
+          
+          // Atualizar o objeto com o __backendId retornado
+          caixaParaDespesa = allData.find(d => d.caixa_id === caixaId);
+        }
+
+        const despesa = {
+          tipo: 'despesa',
+          despesa_descricao: document.getElementById('despesa-descricao').value.trim(),
+          despesa_valor: parseFloat(document.getElementById('despesa-valor').value),
+          despesa_data: dataDespesa.toISOString(),
+          despesa_caixa_id: caixaParaDespesa.caixa_id
+        };
+
+        const result = await window.dataSdk.create(despesa);
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        if (result.isOk) {
+          modal.remove();
+          showToast('✓ Despesa registrada com sucesso!', 'success');
+        } else {
+          showToast('✗ Erro ao registrar despesa', 'error');
+        }
+      });
+    }
+
+    function fecharCaixa() {
+      if (!caixaAberto) {
+        showToast('✗ Nenhum caixa aberto', 'error');
+        return;
+      }
+
+      const vendas = allData.filter(d => d.tipo === 'venda' && d.venda_caixa_id === caixaAberto.caixa_id);
+      const despesas = allData.filter(d => d.tipo === 'despesa' && d.despesa_caixa_id === caixaAberto.caixa_id);
+      
+      const totalVendas = vendas.reduce((sum, v) => sum + v.venda_valor_final, 0);
+      const totalDespesas = despesas.reduce((sum, d) => sum + d.despesa_valor, 0);
+      const saldoFinal = caixaAberto.valor_abertura + totalVendas - totalDespesas;
+
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl">
+          <h3 class="text-2xl font-bold mb-6 text-gray-800">🔒 Fechar Caixa</h3>
+          
+          <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700 font-semibold">Abertura:</span>
+              <span class="text-xl font-bold text-gray-800">R$ ${caixaAberto.valor_abertura.toFixed(2)}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-green-700 font-semibold">+ Vendas:</span>
+              <span class="text-xl font-bold text-green-600">R$ ${totalVendas.toFixed(2)}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-red-700 font-semibold">- Despesas:</span>
+              <span class="text-xl font-bold text-red-600">R$ ${totalDespesas.toFixed(2)}</span>
+            </div>
+            <div class="border-t-2 border-blue-200 pt-3 mt-3">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-800 font-bold text-lg">Saldo Final:</span>
+                <span class="text-3xl font-bold text-blue-600">R$ ${saldoFinal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-gray-600 mb-6 text-center">Deseja confirmar o fechamento do caixa?</p>
+          
+          <div class="flex gap-3">
+            <button onclick="this.closest('.fixed').remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+            <button onclick="confirmarFechamentoCaixa()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl flex-1 font-semibold transition">Confirmar Fechamento</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      window.confirmarFechamentoCaixa = async function() {
+        // Buscar o modal pelo contexto correto
+        const modals = document.querySelectorAll('.fixed.inset-0');
+        const modalElement = Array.from(modals).find(m => m.innerHTML.includes('confirmarFechamentoCaixa'));
+        
+        if (!modalElement) return;
+        
+        const btn = modalElement.querySelector('button[onclick*="confirmarFechamentoCaixa"]');
+        if (!btn) return;
+        
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Fechando...<span class="loading-spinner"></span>';
+        btn.disabled = true;
+
+        caixaAberto.status_caixa = 'fechado';
+        const result = await window.dataSdk.update(caixaAberto);
+        
+        if (result.isOk) {
+          modalElement.remove();
+          showToast('✓ Caixa fechado com sucesso!', 'success');
+        } else {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          showToast('✗ Erro ao fechar caixa', 'error');
+        }
+      };
+    }
+
+    function renderMovimentacoes() {
+      const dataStr = dataVisualizacaoCaixa.toISOString().split('T')[0];
+      const caixaDoDia = allData.find(d => d.tipo === 'caixa' && d.data_caixa === dataStr);
+      
+      if (!caixaDoDia) {
+        document.getElementById('movimentacoes-list').innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+              <div class="flex flex-col items-center gap-3">
+                <span class="text-5xl opacity-20">��</span>
+                <span>Nenhum caixa aberto neste dia</span>
+              </div>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      const vendas = allData.filter(d => d.tipo === 'venda' && d.venda_caixa_id === caixaDoDia.caixa_id);
+      const despesas = allData.filter(d => d.tipo === 'despesa' && d.despesa_caixa_id === caixaDoDia.caixa_id);
+      
+      const movimentacoes = [
+        ...vendas.map(v => ({ ...v, tipoMov: 'venda' })),
+        ...despesas.map(d => ({ ...d, tipoMov: 'despesa' }))
+      ].sort((a, b) => {
+        const dataA = a.tipoMov === 'venda' ? new Date(a.venda_data) : new Date(a.despesa_data);
+        const dataB = b.tipoMov === 'venda' ? new Date(b.venda_data) : new Date(b.despesa_data);
+        return dataB - dataA;
+      });
+
+      const tbody = document.getElementById('movimentacoes-list');
+
+      if (movimentacoes.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-4 py-12 text-center text-gray-500">
+              <div class="flex flex-col items-center gap-3">
+                <span class="text-5xl opacity-20">💰</span>
+                <span>Nenhuma movimentação registrada neste dia</span>
+              </div>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = movimentacoes.map(m => {
+        const data = m.tipoMov === 'venda' ? new Date(m.venda_data) : new Date(m.despesa_data);
+        const descricao = m.tipoMov === 'venda' ? `Venda (${m.forma_pagamento})` : m.despesa_descricao;
+        const valor = m.tipoMov === 'venda' ? m.venda_valor_final : m.despesa_valor;
+        const cor = m.tipoMov === 'venda' ? 'text-green-600' : 'text-red-600';
+        const simbolo = m.tipoMov === 'venda' ? '+' : '-';
+
+        return `
+          <tr class="border-b hover:bg-gray-50 transition">
+            <td class="px-4 py-4 text-sm text-gray-900">${data.toLocaleString('pt-BR')}</td>
+            <td class="px-4 py-4 text-sm">
+              <span class="px-3 py-1 rounded-full text-xs font-bold ${m.tipoMov === 'venda' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                ${m.tipoMov === 'venda' ? '🛒 Venda' : '📤 Despesa'}
+              </span>
+            </td>
+            <td class="px-4 py-4 text-sm text-gray-900">${descricao}</td>
+            <td class="px-4 py-4 text-sm font-bold ${cor}">${simbolo} R$ ${valor.toFixed(2)}</td>
+            <td class="px-4 py-4 text-sm">
+              <button onclick="verDetalhesMovimentacao('${m.__backendId}', '${m.tipoMov}')" class="text-blue-600 hover:text-blue-800 font-medium transition mr-3">Ver Detalhes</button>
+              <button onclick="excluirMovimentacao('${m.__backendId}', '${m.tipoMov}')" class="text-red-600 hover:text-red-800 font-medium transition">Excluir</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.verDetalhesMovimentacao = function(id, tipo) {
+      const item = allData.find(d => d.__backendId === id);
+      if (!item) return;
+
+      if (tipo === 'venda') {
+        const itens = JSON.parse(item.venda_itens);
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">��� Detalhes da Venda</h3>
+            
+            <div class="mb-6">
+              <p class="text-gray-600 mb-2"><strong>Data:</strong> ${new Date(item.venda_data).toLocaleString('pt-BR')}</p>
+              <p class="text-gray-600 mb-2"><strong>Forma de Pagamento:</strong> ${item.forma_pagamento}</p>
+              ${item.venda_desconto > 0 ? `<p class="text-gray-600 mb-2"><strong>Desconto:</strong> ${item.venda_desconto}%</p>` : ''}
+            </div>
+
+            <h4 class="font-bold text-lg mb-3 text-gray-800">Itens da Venda:</h4>
+            <div class="space-y-2 mb-6">
+              ${itens.map(i => `
+                <div class="bg-gray-50 rounded-lg p-3 flex justify-between">
+                  <div>
+                    <p class="font-semibold">${i.nome}</p>
+                    <p class="text-sm text-gray-600">Qtd: ${i.quantidade} x R$ ${i.preco.toFixed(2)}</p>
+                  </div>
+                  <p class="font-bold text-green-600">R$ ${(i.quantidade * i.preco).toFixed(2)}</p>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-xl p-4">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-bold text-gray-800">Total:</span>
+                <span class="text-3xl font-bold text-green-600">R$ ${item.venda_valor_final.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <button onclick="this.closest('.fixed').remove()" class="btn-primary text-white px-6 py-3 rounded-xl w-full mt-6 font-semibold">Fechar</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      } else {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">📤 Detalhes da Despesa</h3>
+            
+            <div class="mb-6">
+              <p class="text-gray-600 mb-2"><strong>Data:</strong> ${new Date(item.despesa_data).toLocaleString('pt-BR')}</p>
+              <p class="text-gray-600 mb-2"><strong>Descrição:</strong> ${item.despesa_descricao}</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-xl p-4 mb-6">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-bold text-gray-800">Valor:</span>
+                <span class="text-3xl font-bold text-red-600">R$ ${item.despesa_valor.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <button onclick="this.closest('.fixed').remove()" class="btn-primary text-white px-6 py-3 rounded-xl w-full font-semibold">Fechar</button>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+    };
+
+    window.excluirMovimentacao = async function(id, tipo) {
+      const item = allData.find(d => d.__backendId === id);
+      if (!item) return;
+
+      const descricao = tipo === 'venda' ? `Venda de R$ ${item.venda_valor_final.toFixed(2)}` : `Despesa: ${item.despesa_descricao}`;
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      confirmDiv.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+          <h3 class="text-2xl font-bold mb-4 text-gray-800">⚠️ Confirmar Exclusão</h3>
+          <p class="text-gray-600 mb-6">Deseja realmente excluir esta movimentação?</p>
+          <div class="bg-gray-50 rounded-xl p-4 mb-6">
+            <p class="font-semibold text-gray-800">${descricao}</p>
+          </div>
+          ${tipo === 'venda' ? '<p class="text-sm text-yellow-700 bg-yellow-50 border border-yellow-300 rounded-lg p-3 mb-4">⚠️ <strong>Atenção:</strong> O estoque dos produtos NÃO será restaurado automaticamente.</p>' : ''}
+          <div class="flex gap-3">
+            <button onclick="this.closest('.fixed').remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+            <button onclick="confirmarExclusaoMovimentacao('${id}')" class="btn-danger text-white px-6 py-3 rounded-xl flex-1 font-semibold">Confirmar Exclusão</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmDiv);
+    };
+
+    window.confirmarExclusaoMovimentacao = async function(id) {
+      const item = allData.find(d => d.__backendId === id);
+      if (!item) return;
+
+      const result = await window.dataSdk.delete(item);
+      document.querySelector('.fixed.inset-0').remove();
+      
+      if (result.isOk) {
+        showToast('✓ Movimentação excluída com sucesso!', 'success');
+      } else {
+        showToast('✗ Erro ao excluir movimentação', 'error');
+      }
+    };
+
+    // ========== RECEITUÁRIOS ==========
+    let filtroReceituarioAtivo = 'todos';
+    let buscaReceituarioTexto = '';
+
+    function filtrarReceituarios(filtro) {
+      filtroReceituarioAtivo = filtro;
+      
+      // Atualizar botões
+      ['filtro-todos', 'filtro-aguardando', 'filtro-concluido', 'filtro-nao-respondida', 'filtro-sem-contato'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.classList.remove('bg-green-600', 'text-white');
+          btn.classList.add('bg-gray-200', 'text-gray-700');
+        }
+      });
+      
+      const btnAtivo = document.getElementById(`filtro-${filtro}`);
+      if (btnAtivo) {
+        btnAtivo.classList.remove('bg-gray-200', 'text-gray-700');
+        btnAtivo.classList.add('bg-green-600', 'text-white');
+      }
+      
+      renderReceituarios();
+    }
+
+    function buscarReceituarios() {
+      const input = document.getElementById('busca-receituario');
+      if (input) {
+        buscaReceituarioTexto = input.value.toLowerCase();
+        renderReceituarios();
+      }
+    }
+
+    window.filtrarReceituarios = filtrarReceituarios;
+    window.buscarReceituarios = buscarReceituarios;
+
+    async function mudarStatusReceituario(id, novoStatus, selectElement) {
+      const receituario = allData.find(d => d.__backendId === id);
+      if (!receituario) return;
+
+      // Desabilitar o select durante o update
+      selectElement.disabled = true;
+
+      receituario.status = novoStatus;
+      const result = await window.dataSdk.update(receituario);
+      
+      selectElement.disabled = false;
+
+      if (result.isOk) {
+        // Atualizar visualmente a linha inteira
+        const row = selectElement.closest('tr');
+        if (row) {
+          const statusConfig = {
+            'aguardando': { class: 'status-aguardando', bgClass: 'bg-gradient-to-r from-yellow-50 to-yellow-100' },
+            'concluido': { class: 'status-concluido', bgClass: 'bg-gradient-to-r from-green-50 to-green-100' },
+            'nao-respondida': { class: 'status-nao-respondida', bgClass: 'bg-gradient-to-r from-orange-50 to-orange-100' },
+            'sem-contato': { class: 'status-sem-contato', bgClass: 'bg-gradient-to-r from-red-50 to-red-100' }
+          };
+
+          const status = statusConfig[novoStatus];
+          
+          // Remover todas as classes de background antigas
+          row.className = row.className.split(' ').filter(c => !c.startsWith('bg-')).join(' ');
+          
+          // Adicionar nova classe de background
+          row.className += ` ${status.bgClass}`;
+
+          // Atualizar classes do select
+          selectElement.className = `px-3 py-2 rounded-lg text-xs font-bold border-2 outline-none transition ${status.class}`;
+        }
+        
+        showToast('✓ Status atualizado com sucesso!', 'success');
+      } else {
+        showToast('✗ Erro ao atualizar status', 'error');
+        // Reverter o select para o valor anterior
+        selectElement.value = receituario.status;
+      }
+    }
+
+    window.mudarStatusReceituario = mudarStatusReceituario;
+
+    document.getElementById('rec-tem-desconto').addEventListener('change', (e) => {
+      const container = document.getElementById('rec-desconto-container');
+      if (e.target.value === 'sim') {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+        document.getElementById('rec-desconto-percentual').value = '';
+      }
+      calcularTotalReceituario();
+    });
+
+    ['rec-valor-manipulacao', 'rec-valor-medicacao', 'rec-desconto-percentual'].forEach(id => {
+      document.getElementById(id).addEventListener('input', calcularTotalReceituario);
+    });
+
+    function calcularTotalReceituario() {
+      const manipulacao = parseFloat(document.getElementById('rec-valor-manipulacao').value) || 0;
+      const medicacao = parseFloat(document.getElementById('rec-valor-medicacao').value) || 0;
+      const temDesconto = document.getElementById('rec-tem-desconto').value;
+      const descontoPercentual = parseFloat(document.getElementById('rec-desconto-percentual').value) || 0;
+
+      let total = manipulacao + medicacao;
+
+      if (temDesconto === 'sim' && descontoPercentual > 0) {
+        total = total - (total * descontoPercentual / 100);
+      }
+
+      document.getElementById('rec-total-preview').textContent = `R$ ${total.toFixed(2)}`;
+    }
+
+    document.getElementById('form-receituario').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Cadastrando...<span class="loading-spinner"></span>';
+      btn.disabled = true;
+
+      const manipulacao = parseFloat(document.getElementById('rec-valor-manipulacao').value) || 0;
+      const medicacao = parseFloat(document.getElementById('rec-valor-medicacao').value) || 0;
+      const temDesconto = document.getElementById('rec-tem-desconto').value;
+      const descontoPercentual = parseFloat(document.getElementById('rec-desconto-percentual').value) || 0;
+
+      let total = manipulacao + medicacao;
+      if (temDesconto === 'sim' && descontoPercentual > 0) {
+        total = total - (total * descontoPercentual / 100);
+      }
+
+      const receituario = {
+        tipo: 'receituario',
+        data_emissao: document.getElementById('rec-data-emissao').value,
+        nome_cliente: document.getElementById('rec-cliente').value.trim(),
+        contato: document.getElementById('rec-contato').value.trim(),
+        manipulados: document.getElementById('rec-manipulados').value.trim(),
+        valor_manipulacao: manipulacao,
+        valor_medicacao: medicacao,
+        valor_total: total,
+        tem_desconto: temDesconto,
+        desconto_percentual: descontoPercentual,
+        forma_pagamento: document.getElementById('rec-pagamento').value,
+        tipo_entrega: document.getElementById('rec-entrega').value,
+        status: document.getElementById('rec-status').value
+      };
+
+      const result = await window.dataSdk.create(receituario);
+      
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+
+      if (result.isOk) {
+        e.target.reset();
+        atualizarDataEmissao();
+        document.getElementById('rec-tem-desconto').value = 'nao';
+        document.getElementById('rec-desconto-container').classList.add('hidden');
+        document.getElementById('rec-total-preview').textContent = 'R$ 0,00';
+        showToast('✓ Receituário cadastrado com sucesso!', 'success');
+      } else {
+        showToast('✗ Erro ao cadastrar receituário', 'error');
+      }
+    });
+
+    function renderReceituarios() {
+      let receituarios = allData.filter(d => d.tipo === 'receituario');
+      
+      // Aplicar filtro de status
+      if (filtroReceituarioAtivo !== 'todos') {
+        receituarios = receituarios.filter(r => r.status === filtroReceituarioAtivo);
+      }
+      
+      // Aplicar busca por texto
+      if (buscaReceituarioTexto) {
+        receituarios = receituarios.filter(r => 
+          r.nome_cliente.toLowerCase().includes(buscaReceituarioTexto) ||
+          r.contato.toLowerCase().includes(buscaReceituarioTexto)
+        );
+      }
+      
+      const tbody = document.getElementById('receituarios-list');
+      
+      if (receituarios.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="px-4 py-12 text-center text-gray-500">
+              <div class="flex flex-col items-center gap-3">
+                <span class="text-5xl opacity-20">📋</span>
+                <span>Nenhum receitu����rio encontrado</span>
+              </div>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = receituarios.map(r => {
+        const statusConfig = {
+          'aguardando': { class: 'status-aguardando', label: 'Aguardando', bgClass: 'bg-gradient-to-r from-yellow-50 to-yellow-100' },
+          'concluido': { class: 'status-concluido', label: 'Concluído', bgClass: 'bg-gradient-to-r from-green-50 to-green-100' },
+          'nao-respondida': { class: 'status-nao-respondida', label: 'Não respondida', bgClass: 'bg-gradient-to-r from-orange-50 to-orange-100' },
+          'sem-contato': { class: 'status-sem-contato', label: 'Sem contato', bgClass: 'bg-gradient-to-r from-red-50 to-red-100' }
+        };
+
+        const status = statusConfig[r.status];
+        
+        return `
+          <tr class="border-b hover:opacity-90 transition ${status.bgClass}">
+            <td class="px-4 py-4 text-sm font-medium text-gray-900">${new Date(r.data_emissao).toLocaleDateString('pt-BR')}</td>
+            <td class="px-4 py-4 text-sm font-bold text-gray-900">${r.nome_cliente}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">${r.contato}</td>
+            <td class="px-4 py-4 text-sm font-bold text-gray-900">R$ ${r.valor_total.toFixed(2)}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">${r.tipo_entrega}</td>
+            <td class="px-4 py-4 text-sm">
+              <select onchange="mudarStatusReceituario('${r.__backendId}', this.value, this)" class="px-3 py-2 rounded-lg text-xs font-bold border-2 outline-none transition ${status.class}">
+                <option value="aguardando" ${r.status === 'aguardando' ? 'selected' : ''}>⏳ Aguardando</option>
+                <option value="concluido" ${r.status === 'concluido' ? 'selected' : ''}>✅ Concluído</option>
+                <option value="nao-respondida" ${r.status === 'nao-respondida' ? 'selected' : ''}>⚠️ Não respondida</option>
+                <option value="sem-contato" ${r.status === 'sem-contato' ? 'selected' : ''}>❌ Sem contato</option>
+              </select>
+            </td>
+            <td class="px-4 py-4 text-sm">
+              <button onclick="editarReceituario('${r.__backendId}')" class="text-blue-600 hover:text-blue-800 font-medium transition mr-3">Editar</button>
+              <button onclick="deletarReceituario('${r.__backendId}')" class="text-red-600 hover:text-red-800 font-medium transition">Excluir</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function editarReceituario(id) {
+      const receituario = allData.find(d => d.__backendId === id);
+      if (!receituario) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto';
+      modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-3xl w-full shadow-2xl my-8">
+          <h3 class="text-2xl font-bold mb-6 text-gray-800">✏️ Editar Receituário</h3>
+          <form id="form-editar-receituario" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Data de Emissão *</label>
+              <input type="date" id="edit-rec-data-emissao" value="${receituario.data_emissao}" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Nome do Cliente *</label>
+              <input type="text" id="edit-rec-cliente" value="${receituario.nome_cliente}" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Contato (WhatsApp) *</label>
+              <input type="text" id="edit-rec-contato" value="${receituario.contato}" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Manipulados</label>
+              <input type="text" id="edit-rec-manipulados" value="${receituario.manipulados || ''}" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Valor Manipulação (R$)</label>
+              <input type="number" id="edit-rec-valor-manipulacao" value="${receituario.valor_manipulacao || 0}" step="0.01" min="0" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Valor Medicação Isolado (R$)</label>
+              <input type="number" id="edit-rec-valor-medicacao" value="${receituario.valor_medicacao || 0}" step="0.01" min="0" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Aplicar Desconto? *</label>
+              <select id="edit-rec-tem-desconto" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white">
+                <option value="nao" ${receituario.tem_desconto === 'nao' ? 'selected' : ''}>Não</option>
+                <option value="sim" ${receituario.tem_desconto === 'sim' ? 'selected' : ''}>Sim</option>
+              </select>
+            </div>
+            <div id="edit-rec-desconto-container" class="${receituario.tem_desconto === 'nao' ? 'hidden' : ''}">
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Desconto (%)</label>
+              <input type="number" id="edit-rec-desconto-percentual" value="${receituario.desconto_percentual || 0}" step="0.01" min="0" max="100" class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Forma de Pagamento *</label>
+              <select id="edit-rec-pagamento" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white">
+                <option value="Dinheiro" ${receituario.forma_pagamento === 'Dinheiro' ? 'selected' : ''}>💵 Dinheiro</option>
+                <option value="Cartão" ${receituario.forma_pagamento === 'Cartão' ? 'selected' : ''}>�� Cartão</option>
+                <option value="Pix" ${receituario.forma_pagamento === 'Pix' ? 'selected' : ''}>📱 Pix</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Entrega *</label>
+              <select id="edit-rec-entrega" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white">
+                <option value="Retirada" ${receituario.tipo_entrega === 'Retirada' ? 'selected' : ''}>🏪 Retirada</option>
+                <option value="Entrega" ${receituario.tipo_entrega === 'Entrega' ? 'selected' : ''}>🚚 Entrega</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Status *</label>
+              <select id="edit-rec-status" required class="form-input w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white">
+                <option value="aguardando" ${receituario.status === 'aguardando' ? 'selected' : ''}>⏳ Aguardando confirmação</option>
+                <option value="concluido" ${receituario.status === 'concluido' ? 'selected' : ''}>✅ Concluído</option>
+                <option value="nao-respondida" ${receituario.status === 'nao-respondida' ? 'selected' : ''}>⚠️ Mensagem não respondida</option>
+                <option value="sem-contato" ${receituario.status === 'sem-contato' ? 'selected' : ''}>❌ Não conseguimos entrar em contato</option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
+                <p class="text-sm font-semibold text-blue-900 mb-2">Valor Total do Receituário</p>
+                <p id="edit-rec-total-preview" class="text-4xl font-bold text-blue-700">R$ ${receituario.valor_total.toFixed(2)}</p>
+              </div>
+              <div class="flex gap-3">
+                <button type="button" onclick="this.closest('.fixed').remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+                <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Salvar Alterações</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      document.getElementById('edit-rec-tem-desconto').addEventListener('change', (e) => {
+        const container = document.getElementById('edit-rec-desconto-container');
+        if (e.target.value === 'sim') {
+          container.classList.remove('hidden');
+        } else {
+          container.classList.add('hidden');
+          document.getElementById('edit-rec-desconto-percentual').value = '0';
+        }
+        calcularTotalEdicaoReceituario();
+      });
+
+      ['edit-rec-valor-manipulacao', 'edit-rec-valor-medicacao', 'edit-rec-desconto-percentual'].forEach(id => {
+        document.getElementById(id).addEventListener('input', calcularTotalEdicaoReceituario);
+      });
+
+      function calcularTotalEdicaoReceituario() {
+        const manipulacao = parseFloat(document.getElementById('edit-rec-valor-manipulacao').value) || 0;
+        const medicacao = parseFloat(document.getElementById('edit-rec-valor-medicacao').value) || 0;
+        const temDesconto = document.getElementById('edit-rec-tem-desconto').value;
+        const descontoPercentual = parseFloat(document.getElementById('edit-rec-desconto-percentual').value) || 0;
+
+        let total = manipulacao + medicacao;
+
+        if (temDesconto === 'sim' && descontoPercentual > 0) {
+          total = total - (total * descontoPercentual / 100);
+        }
+
+        document.getElementById('edit-rec-total-preview').textContent = `R$ ${total.toFixed(2)}`;
+      }
+
+      document.getElementById('form-editar-receituario').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = 'Salvando...<span class="loading-spinner"></span>';
+        btn.disabled = true;
+
+        const manipulacao = parseFloat(document.getElementById('edit-rec-valor-manipulacao').value) || 0;
+        const medicacao = parseFloat(document.getElementById('edit-rec-valor-medicacao').value) || 0;
+        const temDesconto = document.getElementById('edit-rec-tem-desconto').value;
+        const descontoPercentual = parseFloat(document.getElementById('edit-rec-desconto-percentual').value) || 0;
+
+        let total = manipulacao + medicacao;
+        if (temDesconto === 'sim' && descontoPercentual > 0) {
+          total = total - (total * descontoPercentual / 100);
+        }
+
+        receituario.data_emissao = document.getElementById('edit-rec-data-emissao').value;
+        receituario.nome_cliente = document.getElementById('edit-rec-cliente').value;
+        receituario.contato = document.getElementById('edit-rec-contato').value;
+        receituario.manipulados = document.getElementById('edit-rec-manipulados').value;
+        receituario.valor_manipulacao = manipulacao;
+        receituario.valor_medicacao = medicacao;
+        receituario.valor_total = total;
+        receituario.tem_desconto = temDesconto;
+        receituario.desconto_percentual = descontoPercentual;
+        receituario.forma_pagamento = document.getElementById('edit-rec-pagamento').value;
+        receituario.tipo_entrega = document.getElementById('edit-rec-entrega').value;
+        receituario.status = document.getElementById('edit-rec-status').value;
+
+        const result = await window.dataSdk.update(receituario);
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        if (result.isOk) {
+          modal.remove();
+          showToast('✓ Receituário atualizado com sucesso!', 'success');
+        } else {
+          showToast('✗ Erro ao atualizar receituário', 'error');
+        }
+      });
+    }
+
+    async function deletarReceituario(id) {
+      const receituario = allData.find(d => d.__backendId === id);
+      if (!receituario) return;
+
+      const confirmDiv = document.createElement('div');
+      confirmDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      confirmDiv.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+          <h3 class="text-2xl font-bold mb-4 text-gray-800">Confirmar exclusão?</h3>
+          <p class="text-gray-600 mb-6">Deseja realmente excluir o receituário de "<strong>${receituario.nome_cliente}</strong>"?</p>
+          <div class="flex gap-3">
+            <button onclick="this.closest('div').parentElement.remove()" class="btn-secondary text-white px-6 py-3 rounded-xl flex-1 font-semibold">Cancelar</button>
+            <button onclick="confirmarExclusaoReceituario('${id}')" class="btn-danger text-white px-6 py-3 rounded-xl flex-1 font-semibold">Excluir</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmDiv);
+    }
+
+    async function confirmarExclusaoReceituario(id) {
+      const receituario = allData.find(d => d.__backendId === id);
+      if (!receituario) return;
+
+      const result = await window.dataSdk.delete(receituario);
+      document.querySelector('.fixed.inset-0').remove();
+      
+      if (result.isOk) {
+        showToast('✓ Receituário excluído com sucesso!', 'success');
+      } else {
+        showToast('✗ Erro ao excluir receituário', 'error');
+      }
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bf660a124f8f623',t:'MTc2ODY1ODQxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
