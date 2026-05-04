@@ -1,0 +1,7 @@
+{
+  "autoApprove": true,
+  "alwaysAllowReadOnly": true,
+  "alwaysAllowWrite": true,
+  "alwaysAllowExecute": true,
+  "alwaysAllowBrowser": true
+}
